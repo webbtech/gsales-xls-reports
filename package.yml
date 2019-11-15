@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Gales Sales XLS Reports Service
+Parameters:
+  IAMUsername:
+    Description: Username of the IAM user for this service
+    Type: String
+    Default: sysadmin
+  ParamBucketName:
+    Description: Bucket that stores pdfs
+    Type: String
+  ParamProjectName:
+    Description: Project name
+    Type: String
+Resources:
+  RestApi:
+    Type: AWS::Serverless::Api
+    DeletionPolicy: Delete
+    DependsOn: Lambda
+    Properties:
+      StageName: Prod
+  Lambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: go1.x
+      CodeUri: s3://gsales-lambdas/gsales-xls-reports/06c3b0b8e925e75818b2de25ac307f7d
+      Handler: /report
+      Role:
+        Fn::GetAtt:
+        - LambdaRole
+        - Arn
+      Timeout: 10
+      Environment:
+        Variables:
+          Stage: prod
+      Events:
+        Ping:
+          Type: Api
+          Properties:
+            Path: /report
+            Method: get
+            RestApiId:
+              Ref: RestApi
+      Tags:
+        BillTo: Gales
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: FunctionParameterAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ssm:GetParametersByPath
+            Resource:
+              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/${ParamProjectName}*
+      - PolicyName: FunctionLogAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+      - PolicyName: FunctionXRayAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+            Resource: '*'
+Outputs:
+  ApiId:
+    Description: API ID
+    Value:
+      Ref: RestApi
+  ApiEndpoint:
+    Description: API Prod stage endpoint
+    Value:
+      Fn::Sub: https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+  ApiArn:
+    Description: API ARN
+    Value:
+      Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/
+  LambdaArn:
+    Description: Lambda ARN
+    Value:
+      Fn::GetAtt:
+      - Lambda
+      - Arn
+  LambdaRoleArn:
+    Description: Lambda Role ARN
+    Value:
+      Fn::GetAtt:
+      - LambdaRole
+      - Arn

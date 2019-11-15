@@ -8,5 +8,8 @@ Golang service to manage various xls report file downloads
 dep init
 ```
 
-## Dependancies
+## Dependencies
 
+``` bash
+
+```
