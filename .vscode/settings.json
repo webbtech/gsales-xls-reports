@@ -1,5 +1,12 @@
 {
   "cSpell.ignoreWords": [
-    "noexist"
+    "abcdefghijklmnopqrstuvwxyz",
+    "noexist",
+    "spreadsheetml",
+    "structs"
+  ],
+  "cSpell.words": [
+    "dbmodel",
+    "dbmongo"
   ]
 }

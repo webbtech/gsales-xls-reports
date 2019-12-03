@@ -57,12 +57,18 @@ func (c *Config) Load() (err error) {
 		return err
 	}
 
+	c.setDBConnectURL()
 	return err
 }
 
 // GetStageEnv method
 func (c *Config) GetStageEnv() StageEnvironment {
 	return c.Stage
+}
+
+// GetMongoConnectURL method
+func (c *Config) GetMongoConnectURL() string {
+	return c.DBConnectURL
 }
 
 // this must be called first in c.Load
@@ -178,16 +184,30 @@ func (c *Config) setSSMParams() (err error) {
 	return err
 }
 
+// Build a url used in mgo.Dial as described in: https://godoc.org/gopkg.in/mgo.v2#Dial
+func (c *Config) setDBConnectURL() *Config {
+
+	var userPass, authSource string
+
+	if defs.DBUser != "" && defs.DBPassword != "" {
+		userPass = defs.DBUser + ":" + defs.DBPassword + "@"
+	}
+
+	if userPass != "" {
+		authSource = "?authSource=admin"
+	}
+
+	c.DBConnectURL = "mongodb://" + userPass + defs.DBHost + "/" + authSource
+
+	return c
+}
+
 // Copies required fields from the defaults to the Config struct
 func (c *Config) setFinal() (err error) {
 
 	c.AWSRegion = defs.AWSRegion
-	c.CognitoClientID = defs.CognitoClientID
-	c.CognitoPoolID = defs.CognitoPoolID
-	c.CognitoRegion = defs.CognitoRegion
-	c.GraphqlURI = defs.GraphqlURI
 	c.S3Bucket = defs.S3Bucket
-	c.S3FilePrefix = defs.S3FilePrefix
+	c.DBName = defs.DBName
 	err = c.validateStage()
 
 	return err
