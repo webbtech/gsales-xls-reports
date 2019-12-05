@@ -1,5 +1,56 @@
 package xlsx
 
+// BankCardJSON function
+func BankCardJSON() string {
+	return `[
+		{
+			"column": "A",
+			"label": "Station",
+			"width": 22.00
+		},
+		{
+			"column": "B",
+			"label": "Record Number",
+			"width": 15.00
+		},
+		{
+			"column": "C",
+			"label": "AMEX",
+			"width": 15.00
+		},
+		{
+			"column": "D",
+			"label": "Discover",
+			"width": 15.00
+		},
+		{
+			"column": "E",
+			"label": "Gales",
+			"width": 15.00
+		},
+		{
+			"column": "F",
+			"label": "MC",
+			"width": 15.00
+		},
+		{
+			"column": "G",
+			"label": "Visa",
+			"width": 15.00
+		},
+		{
+			"column": "H",
+			"label": "Debit",
+			"width": 15.00
+		},
+		{
+			"column": "I",
+			"label": "Other",
+			"width": 15.00
+		}
+	]`
+}
+
 // MonthlySalesJSON function
 func MonthlySalesJSON() string {
 	return `[

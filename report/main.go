@@ -9,82 +9,52 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
 	"github.com/pulpfree/gsales-xls-reports/model/monthlysales"
+	"github.com/pulpfree/gsales-xls-reports/model/payperiod"
 	"github.com/pulpfree/gsales-xls-reports/xlsx"
 )
 
 // Report struct
 type Report struct {
-	allowedTypes map[string]bool
+	allowedTypes []reportType
 	cfg          *config.Config
 	dates        *model.RequestDates
 	file         *xlsx.XLSX
 	filename     string
-	haveFile     bool
-	reportType   string
+	reportType   reportType
 }
+
+// reportType string
+type reportType string
 
 // Constants
 const (
-	reportFileName = "MonthlySalesReport"
-	timeFormat     = "2006-01"
+	timeFormatShort               = "2006-01"
+	timeFormatLong                = "2006-01-02"
+	reportMonthlySales reportType = "monthlysales"
+	reportPayPeriod    reportType = "payperiod"
 )
 
+var validType bool
+
 // New function
-func New(dates *model.RequestDates, cfg *config.Config, reportType string) (r *Report, err error) {
+func New(dates *model.RequestDates, cfg *config.Config, rType string) (r *Report, err error) {
 	r = &Report{
-		cfg:        cfg,
-		dates:      dates,
-		haveFile:   false,
-		reportType: reportType,
+		cfg:   cfg,
+		dates: dates,
 	}
 
-	// test report type
-	r.setAllowedTypes()
-	_, ok := r.allowedTypes[reportType]
-	if ok != true {
-		err = errors.New("Invalid report type")
-	}
-
+	r.reportType, err = r.testReportType(rType)
 	return r, err
 }
 
-// Create method
-func (r *Report) Create() (err error) {
-
-	r.setFileName()
-
-	switch r.reportType {
-	case "monthlysales":
-		return r.createMonthlySales()
-	}
-
-	return err
-}
-
-// SaveToDisk method
-func (r *Report) SaveToDisk(dir string) (fp string, err error) {
-
-	if r.haveFile == false {
-		err = r.Create()
-		if err != nil {
-			return fp, err
-		}
-	}
-
-	filePath := path.Join(dir, r.getFileName())
-	fp, err = r.file.OutputToDisk(filePath)
-
-	return fp, err
-}
+// ===================== Exported Methods ====================================================== //
 
 // CreateSignedURL method
 func (r *Report) CreateSignedURL() (url string, err error) {
 
-	if r.haveFile == false {
-		err = r.Create()
-		if err != nil {
-			return url, err
-		}
+	err = r.create()
+	if err != nil {
+		return url, err
 	}
 
 	fileOutput, err := r.file.OutputFile()
@@ -98,6 +68,38 @@ func (r *Report) CreateSignedURL() (url string, err error) {
 	return s3Service.GetSignedURL(filePrefix, &fileOutput)
 }
 
+// SaveToDisk method
+func (r *Report) SaveToDisk(dir string) (fp string, err error) {
+
+	err = r.create()
+	if err != nil {
+		return fp, err
+	}
+
+	filePath := path.Join(dir, r.getFileName())
+	fp, err = r.file.OutputToDisk(filePath)
+
+	return fp, err
+}
+
+// ===================== Un-exported Methods =================================================== //
+
+// create method
+func (r *Report) create() (err error) {
+
+	r.setFileName()
+
+	switch r.reportType {
+	case reportMonthlySales:
+		return r.createMonthlySales()
+
+	case reportPayPeriod:
+		return r.createPayPeriod()
+	}
+
+	return err
+}
+
 func (r *Report) createMonthlySales() (err error) {
 
 	sales, err := monthlysales.Init(r.dates, r.cfg)
@@ -106,15 +108,31 @@ func (r *Report) createMonthlySales() (err error) {
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.MonthlySales(records)
-	r.haveFile = true
 
 	return err
 }
 
-// ======================== Helper Methods =============================== //
+func (r *Report) createPayPeriod() (err error) {
+
+	pp, err := payperiod.Init(r.dates, r.cfg)
+	records, err := pp.GetRecords()
+	defer pp.DB.Close()
+
+	r.file, err = xlsx.NewFile()
+	err = r.file.PayPeriod(records)
+
+	return err
+}
+
+// ===================== Helper Methods ======================================================== //
 
 func (r *Report) setFileName() {
-	r.filename = fmt.Sprintf("%s_%s.xlsx", reportFileName, r.dates.DateFrom.Format(timeFormat))
+	switch r.reportType {
+	case reportMonthlySales:
+		r.filename = fmt.Sprintf("MonthlySalesReport_%s.xlsx", r.dates.DateFrom.Format(timeFormatShort))
+	case reportPayPeriod:
+		r.filename = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
+	}
 }
 
 func (r *Report) getFileName() string {
@@ -122,7 +140,28 @@ func (r *Report) getFileName() string {
 }
 
 func (r *Report) setAllowedTypes() {
-	r.allowedTypes = make(map[string]bool)
-	r.allowedTypes["monthlysales"] = true
-	r.allowedTypes["payperiod"] = true
+	r.allowedTypes = make([]reportType, 2)
+	r.allowedTypes[0] = reportMonthlySales
+	r.allowedTypes[1] = reportPayPeriod
+}
+
+func (r *Report) testReportType(rType string) (rt reportType, err error) {
+
+	if len(r.allowedTypes) == 0 {
+		r.setAllowedTypes()
+	}
+	for _, at := range r.allowedTypes {
+		strType := string(at)
+		if rType == strType {
+			rt = at
+			break
+		}
+	}
+
+	if rt == "" {
+		errStr := fmt.Sprintf("Invalid report type: %s", rType)
+		err = errors.New(errStr)
+	}
+
+	return rt, err
 }

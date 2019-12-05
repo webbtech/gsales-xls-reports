@@ -7,6 +7,7 @@ import (
 
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/model/bankcards"
 	"github.com/pulpfree/gsales-xls-reports/model/monthlysales"
 	"github.com/pulpfree/gsales-xls-reports/model/payperiod"
 	"github.com/stretchr/testify/suite"
@@ -14,11 +15,12 @@ import (
 
 const (
 	// dateStr    = "2019-08-01"
-	dateStr         = "2019-09-01"
-	defaultsFP      = "../config/defaults.yml"
-	filePathMonthly = "../tmp/monthlySales.xlsx"
-	filePathPay     = "../tmp/payPeriod.xlsx"
-	timeForm        = "2006-01-02"
+	dateStr           = "2019-09-01"
+	defaultsFP        = "../config/defaults.yml"
+	filePathBankCards = "../tmp/bankCards.xlsx"
+	filePathMonthly   = "../tmp/monthlySales.xlsx"
+	filePathPay       = "../tmp/payPeriod.xlsx"
+	timeForm          = "2006-01-02"
 )
 
 // IntegSuite struct
@@ -26,6 +28,7 @@ type IntegSuite struct {
 	cfg          *config.Config
 	db           model.DBHandler
 	file         *XLSX
+	bankCards    *bankcards.Records
 	monthlysales *monthlysales.Sales
 	payPeriod    *payperiod.Records
 	suite.Suite
@@ -57,10 +60,25 @@ func (suite *IntegSuite) SetupTest() {
 		DateTo:   dte.AddDate(0, 1, -1),
 	}
 
+	suite.bankCards, err = bankcards.Init(dates, cfg)
+	suite.NoError(err)
+
 	suite.monthlysales, err = monthlysales.Init(dates, cfg)
 	suite.NoError(err)
 
 	suite.payPeriod, err = payperiod.Init(dates, cfg)
+	suite.NoError(err)
+}
+
+// TestBankCards method
+func (suite *IntegSuite) TestBankCards() {
+	records, err := suite.bankCards.GetRecords()
+	suite.NoError(err)
+
+	err = suite.file.BankCards(records)
+	suite.NoError(err)
+
+	_, err = suite.file.OutputToDisk(filePathBankCards)
 	suite.NoError(err)
 }
 

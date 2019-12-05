@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"fmt"
+	"time"
 
 	excelize "github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/pulpfree/gsales-xls-reports/model"
@@ -23,6 +24,10 @@ func (x *XLSX) MonthlySales(sales []*model.MonthlySales) (err error) {
 	x.setMonthlySalesValues(sheetNm, sales)
 	x.setMonthlySalesTotalsRow(sheetNm)
 	f.SetSheetName(sheetNm, "Monthly Sales")
+	err = f.SetDocProps(&excelize.DocProperties{
+		Title:   "Monthly Sales Report",
+		Created: time.Now().Format(time.RFC3339),
+	})
 
 	return err
 }
@@ -146,7 +151,8 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
-	floatStyle, _ := f.NewStyle(`{"custom_number_format": "0.00; [red]0.00"}`)
+	// floatStyle, _ := f.NewStyle(`{"custom_number_format": "0.00; [red]0.00"}`)
+	floatStyle, _ := f.NewStyle(`{"number_format": 2}`)
 	numStyle, _ := f.NewStyle(`{}`)
 
 	cell, _ = excelize.CoordinatesToCellName(1, totalsRow)

@@ -2,6 +2,20 @@ package model
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+// BankCardRecord struct
+type BankCardRecord struct {
+	BankAmex     float64
+	BankDiscover float64
+	BankGales    float64
+	BankMC       float64
+	BankVisa     float64
+	CashDebit    float64
+	CashOther    float64
+	RecordNumber string
+	StationID    primitive.ObjectID
+	StationName  string
+}
+
 // MonthlySales struct
 type MonthlySales struct {
 	BankAmex               float64

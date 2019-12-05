@@ -25,6 +25,17 @@ type MDB struct {
 	stationMap  map[primitive.ObjectID]*model.Station
 }
 
+// MongoError struct
+type MongoError struct {
+	err  string
+	more string
+	// query bson.M
+}
+
+func (e *MongoError) Error() string {
+	return fmt.Sprintf("%s: %s", e.more, e.err)
+}
+
 // DB and Table constants
 const (
 	colConfig       = "config"
@@ -75,6 +86,21 @@ func (db *MDB) Close() {
 		log.Fatal(err)
 	}
 	fmt.Println("Connection to MongoDB closed.")
+}
+
+// GetBankCards method
+func (db *MDB) GetBankCards(dates *model.RequestDates) (sales []*model.Sales, err error) {
+	sales, err = db.fetchBankCards(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(sales) == 0 {
+		// return nil, fmt.Errorf("mongo error: %w", &MongoError{"error", "method fetchBankCards"})
+		return nil, fmt.Errorf("mongo error: %w", &MongoError{"method fetchBankCards", "Failed to return records for BankCards method"})
+		// return nil, errors.New("Failed to return records from fetchBankCards method")
+	}
+	return sales, err
 }
 
 // GetConfig method
@@ -229,6 +255,28 @@ func (db *MDB) setStationMap() (err error) {
 		db.stationMap[result.ID] = &result
 	}
 	return err
+}
+
+// fetchBankCards method
+func (db *MDB) fetchBankCards(startDate, endDate time.Time) (sales []*model.Sales, err error) {
+
+	col := db.db.Collection(colSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}, primitive.E{Key: "recordNum", Value: 1}})
+	filter := bson.M{"recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
+	cur, err := col.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cur.All(context.TODO(), &sales); err != nil {
+		return nil, err
+	}
+
+	return sales, err
 }
 
 // examples see: https://github.com/simagix/mongo-go-examples/blob/master/examples/aggregate_array_test.go

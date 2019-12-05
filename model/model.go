@@ -5,14 +5,15 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 // DBHandler interface
 type DBHandler interface {
 	Close()
+	GetBankCards(*RequestDates) ([]*Sales, error)
+	GetCarWash(*RequestDates) ([]*NonFuelSale, error)
 	GetConfig() (*Config, error)
 	GetEmployee(primitive.ObjectID) (string, error)
 	GetMonthlyProducts(*RequestDates) ([]*NonFuelProduct, error)
 	GetMonthlySales(*RequestDates) ([]*Sales, error)
+	GetNonFuelCommission(string, primitive.ObjectID) (*CommissionSale, error)
 	GetPayPeriodSales(*RequestDates) ([]*Sales, error)
 	GetStationMap() (map[primitive.ObjectID]*Station, error)
-	GetNonFuelCommission(string, primitive.ObjectID) (*CommissionSale, error)
-	GetCarWash(*RequestDates) ([]*NonFuelSale, error)
 }
 
 // Report interface

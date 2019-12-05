@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -25,10 +27,10 @@ const (
 	timeForm      = "2006-01-02"
 )
 
-var (
+/* var (
 	endDate   time.Time
 	startDate time.Time
-)
+) */
 
 // IntegSuite struct
 type IntegSuite struct {
@@ -73,7 +75,7 @@ func (suite *IntegSuite) SetupTest() {
 	}
 }
 
-// ===================== main Exported Functions =============================================== //
+// ===================== Exported Functions =============================================== //
 
 // TestNewDB method
 func (suite *IntegSuite) TestNewDB() {
@@ -102,7 +104,7 @@ func (suite *IntegSuite) TestGetMonthlySales() {
 	suite.True(len(sales) > 0)
 }
 
-// ===================== main Un-exported Functions ============================================ //
+// ===================== Un-exported Functions ============================================ //
 
 // TestsetConfig
 func (suite *IntegSuite) TestsetConfig() {
@@ -111,7 +113,38 @@ func (suite *IntegSuite) TestsetConfig() {
 	suite.Equal(cfgHST, suite.db.cfg.HST)
 }
 
-// TestfetchMonthlyNonFuel
+// TestfetchBankCards method
+func (suite *IntegSuite) TestfetchBankCards() {
+	records, err := suite.db.fetchBankCards(suite.dates.DateFrom, suite.dates.DateTo)
+	suite.NoError(err)
+	suite.True(len(records) > 10)
+	// fmt.Printf("records %+v\n", records[0])
+}
+
+// TestGetBankCardsError method
+// use this with modifications to the method to test error
+func (suite *IntegSuite) TestGetBankCardsError() {
+
+	_, err := suite.db.GetBankCards(suite.dates)
+	suite.Error(err)
+
+	var mongoError *MongoError
+	if ok := errors.As(err, &mongoError); ok {
+		fmt.Printf("As mongoError: %v\n", mongoError)
+		fmt.Printf("mongoError.err: %v\n", mongoError.err)
+		// handle gracefully
+		fmt.Printf("mongoError.more: %v\n", mongoError.more)
+		return
+	}
+	if errors.Is(err, mongoError) {
+		fmt.Printf("Is mongoError %+v\n", mongoError.more)
+	} else if err != nil {
+		fmt.Printf("error: %+v\n", err)
+	}
+
+}
+
+// TestfetchMonthlyNonFuel method
 func (suite *IntegSuite) TestfetchMonthlyNonFuel() {
 	nf, err := suite.db.fetchMonthlyNonFuel(suite.dates.DateFrom, suite.dates.DateTo)
 	suite.NoError(err)

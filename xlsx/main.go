@@ -3,7 +3,6 @@ package xlsx
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"math"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
@@ -57,7 +56,6 @@ func (x *XLSX) OutputFile() (buf bytes.Buffer, err error) {
 
 // OutputToDisk method
 func (x *XLSX) OutputToDisk(path string) (fp string, err error) {
-	fmt.Printf("path in xlsx.main.OutputToDisk %s\n", path)
 	err = x.file.SaveAs(path)
 	return path, err
 }
@@ -65,17 +63,19 @@ func (x *XLSX) OutputToDisk(path string) (fp string, err error) {
 func (x *XLSX) displayCell(sheetNm string, col int, row int, value interface{}) {
 
 	f := x.file
-	floatStyle, _ := f.NewStyle(`{"custom_number_format": "0.00; [red]0.00"}`)
+	// Apparently, setting a style on a float value produces an error when opening in excel... whew!!
+	// floatStyle, _ := f.NewStyle(`{"custom_number_format": "0.00; [Red]0.00"}`)
+	// floatStyle, _ := f.NewStyle(`{"number_format": 3}`)
 	defStyle, _ := f.NewStyle(`{}`)
 
 	cell, _ := excelize.CoordinatesToCellName(col, row)
-	f.SetCellValue(sheetNm, cell, value)
 
 	switch value.(type) {
 	case float64:
-		f.SetCellStyle(sheetNm, cell, cell, floatStyle)
+		f.SetCellFloat(sheetNm, cell, value.(float64), 3, 64)
 
 	default:
+		f.SetCellValue(sheetNm, cell, value)
 		f.SetCellStyle(sheetNm, cell, cell, defStyle)
 	}
 }

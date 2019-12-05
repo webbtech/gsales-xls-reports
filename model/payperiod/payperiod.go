@@ -1,8 +1,6 @@
 package payperiod
 
 import (
-	"fmt"
-
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
 	"github.com/pulpfree/gsales-xls-reports/model/db"
@@ -76,7 +74,6 @@ func (pp *Records) setRecords() (err error) {
 		return err
 	}
 
-	fmt.Printf("sales %+v\n", sales[0].Attendant.Adjustment)
 	for _, s := range sales {
 
 		employee, err := pp.DB.GetEmployee(s.Attendant.ID)
