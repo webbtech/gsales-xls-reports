@@ -2,8 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/pulpfree/gsales-xls-reports/config"
+	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/report"
+	"github.com/pulpfree/gsales-xls-reports/validate"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -17,6 +22,21 @@ type Response struct {
 	Message   string      `json:"message"`   // Error or status message
 	Status    string      `json:"status"`    // Status code (error|fail|success)
 	Timestamp int64       `json:"timestamp"` // Machine-readable UTC timestamp in nanoseconds since EPOCH
+}
+
+// SignedURL struct
+type SignedURL struct {
+	URL string `json:"url"`
+}
+
+var cfg *config.Config
+
+func init() {
+	cfg = &config.Config{}
+	err := cfg.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // HandleRequest function
@@ -37,9 +57,34 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 		}, hdrs), nil
 	}
 
+	var r *model.RequestInput
+	json.Unmarshal([]byte(req.Body), &r)
+
+	// validate input
+	reportRequest, err := validate.SetRequest(r)
+	if err != nil {
+		return gatewayResponse(Response{
+			Code:      500,
+			Message:   fmt.Sprintf("error: %s", err.Error()),
+			Status:    "error",
+			Timestamp: t.Unix(),
+		}, hdrs), nil
+	}
+	rpt := report.New(reportRequest, cfg)
+	url, err := rpt.CreateSignedURL()
+	if err != nil {
+		return gatewayResponse(Response{
+			Code:      500,
+			Message:   fmt.Sprintf("error: %s", err.Error()),
+			Status:    "error",
+			Timestamp: t.Unix(),
+		}, hdrs), nil
+	}
+	log.Infof("signed url created %s", url)
+
 	return gatewayResponse(Response{
-		Code: 201,
-		// Data:      SignedURL{URL: url},
+		Code:      201,
+		Data:      SignedURL{URL: url},
 		Status:    "success",
 		Timestamp: t.Unix(),
 	}, hdrs), nil

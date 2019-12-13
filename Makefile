@@ -3,7 +3,6 @@ include .env
 # found yolo at: https://azer.bike/journal/a-good-makefile-for-go/
 
 AWS_STACK_NAME ?= $(PROJECT_NAME)
-# AWS_BUCKET_NAME ?= $(PROJECT_NAME)
 
 deploy: build awspackage awsdeploy
 
@@ -41,7 +40,7 @@ awspackage:
 	@aws cloudformation package \
    --template-file ${FILE_TEMPLATE} \
    --output-template-file ${FILE_PACKAGE} \
-   --s3-bucket $(AWS_BUCKET_NAME) \
+   --s3-bucket $(AWS_LAMBDA_BUCKET) \
    --s3-prefix $(AWS_BUCKET_PREFIX) \
    --profile $(AWS_PROFILE) \
    --region $(AWS_REGION)
@@ -55,9 +54,11 @@ awsdeploy:
 	--profile $(AWS_PROFILE) \
 	--force-upload \
 	--parameter-overrides \
-		ParamProjectName=$(PROJECT_NAME) \
-		ParamBucketName=$(AWS_BUCKET_NAME)
+		ParamKMSKeyID=$(KMS_KEY_ID) \
+		ParamReportBucket=${AWS_REPORT_BUCKET}
 
+# ParamLambdaBucket=$(AWS_BUCKET_NAME)
+# ParamProjectName=$(PROJECT_NAME) \
 #			ParamKeyExpiration=$(EXPIRATION) \
 #			ParamENV=$(ENV)
 

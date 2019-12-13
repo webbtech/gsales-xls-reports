@@ -1,5 +1,6 @@
 AWSRegion: "ca-central-1"
-DBHost: 127.0.0.1
+# DBHost: 127.0.0.1
+DBHost: 192.168.86.137
 DBName: "gales-sales"
 DBPassword: ""
 DBUser: ""

@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/pkgerrors"
 )
 
 // MDB struct
@@ -25,17 +26,6 @@ type MDB struct {
 	stationMap  map[primitive.ObjectID]*model.Station
 }
 
-// MongoError struct
-type MongoError struct {
-	err  string
-	more string
-	// query bson.M
-}
-
-func (e *MongoError) Error() string {
-	return fmt.Sprintf("%s: %s", e.more, e.err)
-}
-
 // DB and Table constants
 const (
 	colConfig       = "config"
@@ -45,6 +35,9 @@ const (
 	colSales        = "sales"
 	colStations     = "stations"
 )
+
+// noRecordsMsg constant
+const noRecordsMsg = "No records found matching criteria"
 
 // ======================== Exported Functions ================================================= //
 
@@ -89,18 +82,18 @@ func (db *MDB) Close() {
 }
 
 // GetBankCards method
-func (db *MDB) GetBankCards(dates *model.RequestDates) (sales []*model.Sales, err error) {
-	sales, err = db.fetchBankCards(dates.DateFrom, dates.DateTo)
+func (db *MDB) GetBankCards(dates *model.RequestDates) (records []*model.Sales, err error) {
+
+	records, err = db.fetchBankCards(dates.DateFrom, dates.DateTo)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(sales) == 0 {
-		// return nil, fmt.Errorf("mongo error: %w", &MongoError{"error", "method fetchBankCards"})
-		return nil, fmt.Errorf("mongo error: %w", &MongoError{"method fetchBankCards", "Failed to return records for BankCards method"})
-		// return nil, errors.New("Failed to return records from fetchBankCards method")
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetBankCards", Msg: noRecordsMsg}
 	}
-	return sales, err
+
+	return records, err
 }
 
 // GetConfig method
@@ -109,6 +102,7 @@ func (db *MDB) GetConfig() (cfg *model.Config, err error) {
 	if db.cfg != nil {
 		return db.cfg, nil
 	}
+
 	err = db.setConfig()
 	return db.cfg, err
 }
@@ -125,57 +119,66 @@ func (db *MDB) GetStationMap() (map[primitive.ObjectID]*model.Station, error) {
 	if len(db.stationMap) > 0 {
 		return db.stationMap, nil
 	}
+
 	err := db.setStationMap()
 	return db.stationMap, err
 }
 
 // GetMonthlySales method
-// TODO: create un-exported method to do actual fetch
-func (db *MDB) GetMonthlySales(dates *model.RequestDates) (sales []*model.Sales, err error) {
-
-	col := db.db.Collection(colSales)
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}})
-	filter := bson.M{"recordDate": bson.M{"$gte": dates.DateFrom, "$lte": dates.DateTo}}
-	cur, err := col.Find(ctx, filter, findOptions)
+func (db *MDB) GetMonthlySales(dates *model.RequestDates) (records []*model.Sales, err error) {
+	records, err = db.fetchMonthlySales(dates.DateFrom, dates.DateTo)
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
 
-	for cur.Next(ctx) {
-		var result model.Sales
-		err := cur.Decode(&result)
-		if err != nil {
-			return nil, err
-		}
-		sales = append(sales, &result)
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetMonthlySales", Msg: noRecordsMsg}
 	}
-	if err := cur.Err(); err != nil {
-		return nil, err
-	}
-	return sales, err
+
+	return records, err
 }
 
 // GetMonthlyProducts method
-func (db *MDB) GetMonthlyProducts(dates *model.RequestDates) (docs []*model.NonFuelProduct, err error) {
-	docs, err = db.fetchMonthlyNonFuel(dates.DateFrom, dates.DateTo)
-	return docs, err
+func (db *MDB) GetMonthlyProducts(dates *model.RequestDates) (records []*model.NonFuelProduct, err error) {
+
+	records, err = db.fetchMonthlyNonFuel(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetMonthlyProducts", Msg: noRecordsMsg}
+	}
+
+	return records, err
 }
 
 // GetPayPeriodSales method
-func (db *MDB) GetPayPeriodSales(dates *model.RequestDates) (sales []*model.Sales, err error) {
-	sales, err = db.fetchPayPeriodSales(dates.DateFrom, dates.DateTo)
-	return sales, err
+func (db *MDB) GetPayPeriodSales(dates *model.RequestDates) (records []*model.Sales, err error) {
+	records, err = db.fetchPayPeriodSales(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetPayPeriodSales", Msg: noRecordsMsg}
+	}
+
+	return records, err
 }
 
 // GetCarWash method
-func (db *MDB) GetCarWash(dates *model.RequestDates) (nfSales []*model.NonFuelSale, err error) {
-	nfSales, err = db.fetchCarWash(dates.DateFrom, dates.DateTo)
-	return nfSales, err
+func (db *MDB) GetCarWash(dates *model.RequestDates) (records []*model.NonFuelSale, err error) {
+	records, err = db.fetchCarWash(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetCarWash", Msg: noRecordsMsg}
+	}
+
+	return records, err
 }
 
 // GetNonFuelCommission method
@@ -272,7 +275,7 @@ func (db *MDB) fetchBankCards(startDate, endDate time.Time) (sales []*model.Sale
 		return nil, err
 	}
 
-	if err := cur.All(context.TODO(), &sales); err != nil {
+	if err := cur.All(ctx, &sales); err != nil {
 		return nil, err
 	}
 
@@ -406,6 +409,27 @@ func (db *MDB) fetchMonthlyNonFuel(startDate, endDate time.Time) (docs []*model.
 	return docs, nil
 }
 
+func (db *MDB) fetchMonthlySales(startDate, endDate time.Time) (sales []*model.Sales, err error) {
+	col := db.db.Collection(colSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}})
+	filter := bson.M{"recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
+	cur, err := col.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.All(ctx, &sales); err != nil {
+		return nil, err
+	}
+
+	return sales, err
+}
+
 func (db *MDB) fetchPayPeriodSales(startDate, endDate time.Time) (sales []*model.Sales, err error) {
 
 	col := db.db.Collection(colSales)
@@ -421,19 +445,14 @@ func (db *MDB) fetchPayPeriodSales(startDate, endDate time.Time) (sales []*model
 	}
 	defer cur.Close(ctx)
 
-	for cur.Next(ctx) {
-		var result model.Sales
-		err := cur.Decode(&result)
-		if err != nil {
-			return nil, err
-		}
-		sales = append(sales, &result)
-		// fmt.Printf("result %+v\n", result.Summary.Product)
+	if err := cur.All(ctx, &sales); err != nil {
+		return nil, err
 	}
+
 	return sales, err
 }
 
-func (db *MDB) fetchCarWash(startDate, endDate time.Time) (nfSales []*model.NonFuelSale, err error) {
+func (db *MDB) fetchCarWash(startDate, endDate time.Time) (sales []*model.NonFuelSale, err error) {
 
 	col := db.db.Collection(colNonFuelSales)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -448,16 +467,11 @@ func (db *MDB) fetchCarWash(startDate, endDate time.Time) (nfSales []*model.NonF
 	}
 	defer cur.Close(ctx)
 
-	for cur.Next(ctx) {
-		var result model.NonFuelSale
-		err := cur.Decode(&result)
-		if err != nil {
-			return nil, err
-		}
-		nfSales = append(nfSales, &result)
+	if err := cur.All(ctx, &sales); err != nil {
+		return nil, err
 	}
 
-	return nfSales, err
+	return sales, err
 }
 
 func (db *MDB) fetchNonFuelCommission(recordNum string, stationID primitive.ObjectID) (com *model.CommissionSale, err error) {

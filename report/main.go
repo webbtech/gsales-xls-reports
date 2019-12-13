@@ -1,7 +1,6 @@
 package report
 
 import (
-	"errors"
 	"fmt"
 	"path"
 
@@ -15,36 +14,28 @@ import (
 
 // Report struct
 type Report struct {
-	allowedTypes []reportType
-	cfg          *config.Config
-	dates        *model.RequestDates
-	file         *xlsx.XLSX
-	filename     string
-	reportType   reportType
+	cfg        *config.Config
+	dates      *model.RequestDates
+	file       *xlsx.XLSX
+	filename   string
+	reportType *model.ReportType
 }
-
-// reportType string
-type reportType string
 
 // Constants
 const (
-	timeFormatShort               = "2006-01"
-	timeFormatLong                = "2006-01-02"
-	reportMonthlySales reportType = "monthlysales"
-	reportPayPeriod    reportType = "payperiod"
+	timeFormatShort = "2006-01"
+	timeFormatLong  = "2006-01-02"
 )
 
 var validType bool
 
 // New function
-func New(dates *model.RequestDates, cfg *config.Config, rType string) (r *Report, err error) {
-	r = &Report{
-		cfg:   cfg,
-		dates: dates,
+func New(req *model.ReportRequest, cfg *config.Config) *Report {
+	return &Report{
+		cfg:        cfg,
+		dates:      req.Dates,
+		reportType: req.ReportType,
 	}
-
-	r.reportType, err = r.testReportType(rType)
-	return r, err
 }
 
 // ===================== Exported Methods ====================================================== //
@@ -89,11 +80,12 @@ func (r *Report) create() (err error) {
 
 	r.setFileName()
 
-	switch r.reportType {
-	case reportMonthlySales:
+	rt := *r.reportType
+	switch rt {
+	case model.MonthlySalesReport:
 		return r.createMonthlySales()
 
-	case reportPayPeriod:
+	case model.PayPeriodReport:
 		return r.createPayPeriod()
 	}
 
@@ -127,10 +119,12 @@ func (r *Report) createPayPeriod() (err error) {
 // ===================== Helper Methods ======================================================== //
 
 func (r *Report) setFileName() {
-	switch r.reportType {
-	case reportMonthlySales:
+
+	rt := *r.reportType
+	switch rt {
+	case model.MonthlySalesReport:
 		r.filename = fmt.Sprintf("MonthlySalesReport_%s.xlsx", r.dates.DateFrom.Format(timeFormatShort))
-	case reportPayPeriod:
+	case model.PayPeriodReport:
 		r.filename = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
 	}
 }
@@ -139,29 +133,7 @@ func (r *Report) getFileName() string {
 	return r.filename
 }
 
-func (r *Report) setAllowedTypes() {
-	r.allowedTypes = make([]reportType, 2)
-	r.allowedTypes[0] = reportMonthlySales
-	r.allowedTypes[1] = reportPayPeriod
-}
-
-func (r *Report) testReportType(rType string) (rt reportType, err error) {
-
-	if len(r.allowedTypes) == 0 {
-		r.setAllowedTypes()
-	}
-	for _, at := range r.allowedTypes {
-		strType := string(at)
-		if rType == strType {
-			rt = at
-			break
-		}
-	}
-
-	if rt == "" {
-		errStr := fmt.Sprintf("Invalid report type: %s", rType)
-		err = errors.New(errStr)
-	}
-
-	return rt, err
+func (r *Report) setReportType(rType string) (err error) {
+	// r.reportType, err = model.ReportStringToType(rType)
+	return err
 }

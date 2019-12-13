@@ -4,122 +4,112 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/validate"
 	"github.com/stretchr/testify/suite"
 )
 
 const (
-	// dateStr = "2019-08-01"
-	dateStr    = "2019-09-01"
+	monthDate       = "2019-10"
+	monthlyReport   = "monthlysales"
+	payPeriodReport = "payperiod"
+	periodDateFrom  = "2018-09-01"
+	periodDateTo    = "2018-10-10"
+
+	// dateMonth    = "2019-08"
+	// dateDayStart = "2019-08-01"
+	// dateDayEnd   = "2019-08-16"
 	defaultsFP = "../config/defaults.yml"
 	timeForm   = "2006-01-02"
 )
 
 // IntegSuite struct
 type IntegSuite struct {
-	report *Report
+	report          *Report
+	periodReportReq *model.ReportRequest
+	monthReportReq  *model.ReportRequest
 	suite.Suite
 }
 
 var (
-	cfg   *config.Config
-	dates *model.RequestDates
+	cfg *config.Config
+	// dates         *model.RequestDates
+	// reportRequest *model.ReportRequest
 )
 
 // SetupTest method
-func (suite *IntegSuite) SetupTest() {
+func (s *IntegSuite) SetupTest() {
 	// init config
 	os.Setenv("Stage", "test")
 	cfg = &config.Config{DefaultsFilePath: defaultsFP}
 	err := cfg.Load()
-	suite.NoError(err)
+	s.NoError(err)
 
-	// Set start and end dates for monthly reports
-	t, err := time.Parse(timeForm, dateStr)
-	if err != nil {
-		panic(err)
+	monthReportInput := &model.RequestInput{
+		Date:       monthDate,
+		ReportType: monthlyReport,
 	}
-	currentYear, currentMonth, _ := t.Date()
-	currentLocation := t.Location()
+	s.monthReportReq, _ = validate.SetRequest(monthReportInput)
 
-	dte := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
-	dates = &model.RequestDates{
-		DateFrom: dte,
-		DateTo:   dte.AddDate(0, 1, -1),
+	periodReportInput := &model.RequestInput{
+		DateFrom:   periodDateFrom,
+		DateTo:     periodDateTo,
+		ReportType: payPeriodReport,
 	}
-
+	s.periodReportReq, _ = validate.SetRequest(periodReportInput)
 }
 
 // TestsetFileName method
-func (suite *IntegSuite) TestsetFileName() {
+func (s *IntegSuite) TestsetFileName() {
+	fmt.Printf("cfg in TestsetFileNam %+v\n", cfg)
 	var err error
-	suite.report, err = New(dates, cfg, "monthlysales")
-	suite.NoError(err)
-	suite.report.setFileName()
-	fileNm := suite.report.getFileName()
+	s.report = New(s.monthReportReq, cfg)
+	s.NoError(err)
+	s.report.setFileName()
+	fileNm := s.report.getFileName()
 
-	// stDteStr := dates.DateFrom.Format(timeFormat)
-	startDate := dateStr[:len(dateStr)-3]
-	expectedFileNm := fmt.Sprintf("MonthlySalesReport_%s.xlsx", startDate)
-	suite.Equal(fileNm, expectedFileNm)
+	expectedFileNm := fmt.Sprintf("MonthlySalesReport_%s.xlsx", monthDate)
+	s.Equal(fileNm, expectedFileNm)
 
 	// now test report with date range
-	suite.report, err = New(dates, cfg, "payperiod")
-	suite.NoError(err)
-	suite.report.setFileName()
-	fileNm = suite.report.getFileName()
+	s.report = New(s.periodReportReq, cfg)
+	s.NoError(err)
+	s.report.setFileName()
+	fileNm = s.report.getFileName()
 
-	startDate = dates.DateFrom.Format(timeFormatLong)
-	endDate := dates.DateTo.Format(timeFormatLong)
-	expectedFileNm = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", startDate, endDate)
-	suite.Equal(fileNm, expectedFileNm)
+	expectedFileNm = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", periodDateFrom, periodDateTo)
+	s.Equal(fileNm, expectedFileNm)
 }
 
-// TestallowedTypes method
-func (suite *IntegSuite) TestallowedTypes() {
-	suite.report = &Report{}
+// Testcreate method
+func (s *IntegSuite) Testcreate() {
 	var err error
-	validType := "monthlysales"
-	invalidType := "monthlyreport"
+	s.report = New(s.monthReportReq, cfg)
+	err = s.report.create()
+	s.NoError(err)
 
-	_, err = suite.report.testReportType(validType)
-	suite.NoError(err)
-
-	_, err = suite.report.testReportType(invalidType)
-	suite.Error(err)
-}
-
-// TestCreate method
-func (suite *IntegSuite) TestCreate() {
-	var err error
-	suite.report, err = New(dates, cfg, "monthlysales")
-	err = suite.report.create()
-	suite.NoError(err)
-
-	suite.report, err = New(dates, cfg, "payperiod")
-	err = suite.report.create()
-	suite.NoError(err)
+	s.report = New(s.periodReportReq, cfg)
+	err = s.report.create()
+	s.NoError(err)
 }
 
 // TestSaveToDisk method
-func (suite *IntegSuite) TestSaveToDisk() {
+func (s *IntegSuite) TestSaveToDisk() {
 	var err error
-	suite.report, err = New(dates, cfg, "payperiod")
-	_, err = suite.report.SaveToDisk("../tmp")
-	suite.NoError(err)
+	s.report = New(s.periodReportReq, cfg)
+	_, err = s.report.SaveToDisk("../tmp")
+	s.NoError(err)
 }
 
 // TestCreateSignedURL method
-func (suite *IntegSuite) TestCreateSignedURL() {
+func (s *IntegSuite) TestCreateSignedURL() {
 	var err error
-	suite.report, err = New(dates, cfg, "payperiod")
-	// suite.report, err = New(dates, cfg, "monthlysales")
-	url, err := suite.report.CreateSignedURL()
-	suite.NoError(err)
-	suite.True(len(url) > 100)
+	s.report = New(s.periodReportReq, cfg)
+	url, err := s.report.CreateSignedURL()
+	s.NoError(err)
+	s.True(len(url) > 100)
 }
 
 // TestIntegrationSuite function

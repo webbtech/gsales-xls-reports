@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,28 +14,28 @@ import (
 
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/pkgerrors"
+	"github.com/pulpfree/gsales-xls-reports/util"
 )
 
 const (
-	cfgHST  = int32(13)
-	dateStr = "2019-08-01"
-	// dateStr       = "2019-09-01"
+	cfgHST        = int32(13)
+	dateMonth     = "2019-08"
+	dateDayStart  = "2019-08-01"
+	dateDayEnd    = "2019-08-16"
 	defaultsFP    = "../../config/defaults.yml"
 	employeeIDStr = "5733c671982d828347021ed7"
 	employeeName  = "Grimstead, Kevin"
 	timeForm      = "2006-01-02"
 )
 
-/* var (
-	endDate   time.Time
-	startDate time.Time
-) */
-
 // IntegSuite struct
 type IntegSuite struct {
-	cfg   *config.Config
-	dates *model.RequestDates
-	db    *MDB
+	cfg *config.Config
+	// dates *model.RequestDates
+	dateMonth *model.RequestDates
+	dateDays  *model.RequestDates
+	db        *MDB
 	suite.Suite
 }
 
@@ -61,18 +60,15 @@ func (suite *IntegSuite) SetupTest() {
 		db:     client.Database(suite.cfg.DBName),
 	}
 
-	// Set start and end dates for monthly reports
-	t, err := time.Parse(timeForm, dateStr)
-	if err != nil {
-		panic(err)
+	inputMonth := &model.RequestInput{
+		Date: dateMonth,
 	}
-	currentYear, currentMonth, _ := t.Date()
-	currentLocation := t.Location()
-	dte := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
-	suite.dates = &model.RequestDates{
-		DateFrom: dte,
-		DateTo:   dte.AddDate(0, 1, -1),
+	suite.dateMonth, _ = util.CreateDates(inputMonth)
+	inputDayRange := &model.RequestInput{
+		DateFrom: dateDayStart,
+		DateTo:   dateDayEnd,
 	}
+	suite.dateDays, _ = util.CreateDates(inputDayRange)
 }
 
 // ===================== Exported Functions =============================================== //
@@ -97,9 +93,30 @@ func (suite *IntegSuite) TestGetStationMap() {
 	suite.True(len(sm) > 0)
 }
 
+// TestGetCarWash
+func (suite *IntegSuite) TestGetCarWash() {
+	sales, err := suite.db.GetCarWash(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
 // TestGetMonthlySales
 func (suite *IntegSuite) TestGetMonthlySales() {
-	sales, err := suite.db.GetMonthlySales(suite.dates)
+	sales, err := suite.db.GetMonthlySales(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
+// TestGetMonthlyProducts
+func (suite *IntegSuite) TestGetMonthlyProducts() {
+	sales, err := suite.db.GetMonthlyProducts(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
+// TestGetPayPeriodSales
+func (suite *IntegSuite) TestGetPayPeriodSales() {
+	sales, err := suite.db.GetPayPeriodSales(suite.dateMonth)
 	suite.NoError(err)
 	suite.True(len(sales) > 0)
 }
@@ -115,7 +132,7 @@ func (suite *IntegSuite) TestsetConfig() {
 
 // TestfetchBankCards method
 func (suite *IntegSuite) TestfetchBankCards() {
-	records, err := suite.db.fetchBankCards(suite.dates.DateFrom, suite.dates.DateTo)
+	records, err := suite.db.fetchBankCards(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(records) > 10)
 	// fmt.Printf("records %+v\n", records[0])
@@ -125,36 +142,48 @@ func (suite *IntegSuite) TestfetchBankCards() {
 // use this with modifications to the method to test error
 func (suite *IntegSuite) TestGetBankCardsError() {
 
-	_, err := suite.db.GetBankCards(suite.dates)
+	inputMonth := &model.RequestInput{
+		Date: "2200-12",
+	}
+	dateMonth, _ := util.CreateDates(inputMonth)
+
+	_, err := suite.db.GetBankCards(dateMonth)
 	suite.Error(err)
 
-	var mongoError *MongoError
+	var mongoError *pkgerrors.MongoError
 	if ok := errors.As(err, &mongoError); ok {
-		fmt.Printf("As mongoError: %v\n", mongoError)
-		fmt.Printf("mongoError.err: %v\n", mongoError.err)
+		// fmt.Printf("As mongoError: %v\n", mongoError)
+		// fmt.Printf("mongoError.Err: %v\n", mongoError.Err)
 		// handle gracefully
-		fmt.Printf("mongoError.more: %v\n", mongoError.more)
-		return
+		// fmt.Printf("mongoError.Msg: %v\n", mongoError.Msg)
+		suite.Equal(mongoError.Msg, noRecordsMsg)
 	}
 	if errors.Is(err, mongoError) {
-		fmt.Printf("Is mongoError %+v\n", mongoError.more)
 	} else if err != nil {
 		fmt.Printf("error: %+v\n", err)
+		suite.Equal(mongoError.Msg, noRecordsMsg)
 	}
-
 }
 
 // TestfetchMonthlyNonFuel method
 func (suite *IntegSuite) TestfetchMonthlyNonFuel() {
-	nf, err := suite.db.fetchMonthlyNonFuel(suite.dates.DateFrom, suite.dates.DateTo)
+	nf, err := suite.db.fetchMonthlyNonFuel(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(nf) > 0)
 	// fmt.Printf("nf %+v\n", nf[0])
 }
 
+// TestfetchMonthlySales method
+func (suite *IntegSuite) TestfetchMonthlySales() {
+	sales, err := suite.db.fetchMonthlySales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+	fmt.Printf("sales %+v\n", sales[0])
+}
+
 // TestfetchPayPeriodSales method
 func (suite *IntegSuite) TestfetchPayPeriodSales() {
-	records, err := suite.db.fetchPayPeriodSales(suite.dates.DateFrom, suite.dates.DateTo)
+	records, err := suite.db.fetchPayPeriodSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(records) > 10)
 	// fmt.Printf("records[0] %+v\n", records[0])
@@ -162,14 +191,14 @@ func (suite *IntegSuite) TestfetchPayPeriodSales() {
 
 // TestfetchPayPeriodSales method
 func (suite *IntegSuite) TestfetchCarWash() {
-	records, err := suite.db.fetchCarWash(suite.dates.DateFrom, suite.dates.DateTo)
+	records, err := suite.db.fetchCarWash(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(records) > 10)
 }
 
 // TestfetchNonFuelCommission method
 func (suite *IntegSuite) TestfetchNonFuelCommission() {
-	records, _ := suite.db.fetchPayPeriodSales(suite.dates.DateFrom, suite.dates.DateTo)
+	records, _ := suite.db.fetchPayPeriodSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	// recordNum := records[0].RecordNum
 	// stationID := records[0].StationID
 	for _, r := range records {

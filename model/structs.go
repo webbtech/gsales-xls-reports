@@ -2,13 +2,18 @@ package model
 
 import "time"
 
-// ===================== Request Structs ======================================================= //
+// ReportRequest struct
+type ReportRequest struct {
+	Dates      *RequestDates
+	ReportType *ReportType
+}
 
 // RequestInput struct
 type RequestInput struct {
-	Date     string `json:"date"`
-	DateFrom string `json:"dateFrom"`
-	DateTo   string `json:"dateTo"`
+	Date       string `json:"date"`
+	DateFrom   string `json:"dateFrom"`
+	DateTo     string `json:"dateTo"`
+	ReportType string `json:"type"`
 }
 
 // RequestDates struct
