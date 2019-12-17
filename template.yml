@@ -33,6 +33,12 @@ Resources:
     DependsOn: Lambda
     Properties:
       StageName: Prod
+      # Cors: "'*'"
+      Cors:
+        AllowMethods: "'GET,OPTIONS,POST,PUT'"
+        AllowHeaders: "'Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      # EndpointConfiguration: REGIONAL
       # Auth:
       #   DefaultAuthorizer: LambdaTokenAuthorizer
       #   Authorizers:

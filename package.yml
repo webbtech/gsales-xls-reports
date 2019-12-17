@@ -22,11 +22,15 @@ Resources:
     DependsOn: Lambda
     Properties:
       StageName: Prod
+      Cors:
+        AllowMethods: '''GET,OPTIONS,POST,PUT'''
+        AllowHeaders: '''Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+        AllowOrigin: '''*'''
   Lambda:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: go1.x
-      CodeUri: s3://gsales-lambdas/xls-reports/2fc53d7a061bd5fc7181f34545e9871f
+      CodeUri: s3://gsales-lambdas/xls-reports/ccf0a772eda8d5429729eaecfc5720e1
       Handler: /report
       Role:
         Fn::GetAtt:

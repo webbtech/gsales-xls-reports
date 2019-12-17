@@ -12,7 +12,7 @@ import (
 
 const (
 	// dateStr = "2019-08-01"
-	dateStr    = "2019-09-01"
+	dateStr    = "2019-11-01"
 	defaultsFP = "../../config/defaults.yml"
 	timeForm   = "2006-01-02"
 )

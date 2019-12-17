@@ -9,7 +9,7 @@ import (
 // Attendant struct
 type Attendant struct {
 	ID                primitive.ObjectID `bson:"ID" json:"ID"`
-	Adjustment        string             `bson:"adjustment" json:"adjustment"`
+	Adjustment        *string            `bson:"adjustment" json:"adjustment"`
 	OvershortComplete bool               `bson:"overshortComplete" json:"overshortComplete"`
 	OvershortValue    *float64           `bson:"overshortValue" json:"overshortValue"`
 	SheetComplete     bool               `bson:"sheetComplete" json:"sheetComplete"`
@@ -144,17 +144,17 @@ type SalesSummary struct {
 		Fuel5 *FuelType `bson:"fuel_5" json:"fuel_5"`
 		Fuel6 *FuelType `bson:"fuel_6" json:"fuel_6"`
 	}
-	BobsFuelAdj            float64 `bson:"bobsFuelAdj" json:"bobsFuelAdj"`
-	FuelDollar             float64 `bson:"fuelDollar" json:"fuelDollar"`
-	FuelLitre              float64 `bson:"fuelLitre" json:"fuelLitre"`
-	OtherFuelDollar        float64 `bson:"otherFuelDollar" json:"otherFuelDollar"`
-	OtherFuelLitre         float64 `bson:"otherFuelLitre" json:"otherFuelLitre"`
-	Product                float64 `bson:"product" json:"product"`
-	TotalNonFuel           float64 `bson:"totalNonFuel" json:"totalNonFuel"`
-	TotalSales             float64 `bson:"totalSales" json:"totalSales"`
-	TotalCash              float64 `bson:"cashTotal" json:"totalCash"`
-	TotalCreditCardAndCash float64 `bson:"cashCCTotal" json:"totalCreditCardAndCash"`
-	TotalCreditCard        float64 `bson:"creditCardTotal" json:"totalCreditCard"`
+	BobsFuelAdj            *float64 `bson:"bobsFuelAdj" json:"bobsFuelAdj"`
+	FuelDollar             float64  `bson:"fuelDollar" json:"fuelDollar"`
+	FuelLitre              float64  `bson:"fuelLitre" json:"fuelLitre"`
+	OtherFuelDollar        float64  `bson:"otherFuelDollar" json:"otherFuelDollar"`
+	OtherFuelLitre         float64  `bson:"otherFuelLitre" json:"otherFuelLitre"`
+	Product                float64  `bson:"product" json:"product"`
+	TotalNonFuel           float64  `bson:"totalNonFuel" json:"totalNonFuel"`
+	TotalSales             float64  `bson:"totalSales" json:"totalSales"`
+	TotalCash              float64  `bson:"cashTotal" json:"totalCash"`
+	TotalCreditCardAndCash float64  `bson:"cashCCTotal" json:"totalCreditCardAndCash"`
+	TotalCreditCard        float64  `bson:"creditCardTotal" json:"totalCreditCard"`
 }
 
 // Station struct

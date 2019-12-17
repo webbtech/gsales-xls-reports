@@ -20,7 +20,7 @@ import (
 
 const (
 	cfgHST        = int32(13)
-	dateMonth     = "2019-08"
+	dateMonth     = "2019-11"
 	dateDayStart  = "2019-08-01"
 	dateDayEnd    = "2019-08-16"
 	defaultsFP    = "../../config/defaults.yml"
@@ -178,7 +178,7 @@ func (suite *IntegSuite) TestfetchMonthlySales() {
 	sales, err := suite.db.fetchMonthlySales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(sales) > 0)
-	fmt.Printf("sales %+v\n", sales[0])
+	// fmt.Printf("sales %+v\n", sales[0])
 }
 
 // TestfetchPayPeriodSales method

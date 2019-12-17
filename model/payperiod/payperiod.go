@@ -82,7 +82,7 @@ func (pp *Records) setRecords() (err error) {
 		}
 
 		record := &model.PayPeriodRecord{
-			AttendantAdjustment: s.Attendant.Adjustment,
+			AttendantAdjustment: model.SetString(s.Attendant.Adjustment),
 			Employee:            employee,
 			NonFuelSales:        model.SetFloat(s.Summary.TotalNonFuel),
 			ProductSales:        model.SetFloat(s.Summary.Product),

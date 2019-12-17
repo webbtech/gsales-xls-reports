@@ -45,3 +45,23 @@ func SetFloat(num interface{}) float64 {
 
 	return ret
 }
+
+// SetString function
+func SetString(s interface{}) string {
+	var ret string
+	switch v := s.(type) {
+	case *string:
+		// need to check for nil here to deal with null db values
+		if v == nil {
+			ret = ""
+		} else {
+			ret = *v
+		}
+	case string:
+		ret = v
+	default:
+		ret = ""
+	}
+
+	return ret
+}

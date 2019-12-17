@@ -1,39 +1,8 @@
-open -a Numbers ./testfile.xlsx
+XMLHttpRequest at 'https://t71a1oad0b.execute-api.ca-central-1.amazonaws.com/Prod/report' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
 
-{
-  Attendant:0xc0002824b0 
-  Cash:0xc000282500 
-  CreditCard:0xc0002c2a50 
-  EmployeeName:Byers, 
-  FuelSalesHST:906.6993805310376 
-  FuelSalesNoHST:6974.610619469524 
-  NonFuelAdjustOS:0 
-  OtherNonFuel:0xc000470910 
-  OtherNonFuelBobs:0xc0002c4330 
-  Overshort:0xc000464960 
-  Products:[] 
-  RecordNum:2019-08-01-1 
-  StationID:ObjectID("56cf1815982d82b0f3000000") 
-  StationName:Martindale 
-  Summary: {
-    Fuel:{
-      Fuel1:0xc0004db280 
-      Fuel2:0xc0004db2e0 
-      Fuel3:0xc0004db310 
-      Fuel4:0xc0004db340 
-      Fuel5:<nil> 
-      Fuel6:<nil>
-    } 
-    BobsFuelAdj:0 
-    FuelDollar:7881.310000000562 
-    FuelLitre:6586.549999999849 
-    OtherFuelDollar:0 
-    OtherFuelLitre:0 
-    Product:0 
-    TotalNonFuel:1151.66 
-    TotalSales:9032.970000000561 
-    TotalCash:4188.51 
-    TotalCreditCardAndCash:9036.470000000001 
-    TotalCreditCard:4847.96
-  }
-}
+Access to XMLHttpRequest at 'https://t71a1oad0b.execute-api.ca-central-1.amazonaws.com/Prod/report' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+
+TODO:
+dereference Attendant.Adjustment string
+SalesSummary.BobsFuelAdj

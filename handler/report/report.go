@@ -44,6 +44,7 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 
 	hdrs := make(map[string]string)
 	hdrs["Content-Type"] = "application/json"
+	hdrs["Access-Control-Allow-Origin"] = "*"
 	t := time.Now()
 
 	// If this is a ping test, intercept and return
