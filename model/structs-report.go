@@ -16,8 +16,20 @@ type BankCardRecord struct {
 	StationName  string
 }
 
-// MonthlySales struct
-type MonthlySales struct {
+// EmployeeOSRecord struct
+type EmployeeOSRecord struct {
+	DiscrepancyDescription string
+	Employee               string
+	OvershortAttendant     float64
+	OvershortDiff          float64
+	OvershortShift         float64
+	RecordNumber           string
+	StationID              primitive.ObjectID
+	StationName            string
+}
+
+// MonthlySaleRecord struct
+type MonthlySaleRecord struct {
 	BankAmex               float64
 	BankDiscover           float64
 	BankGales              float64
@@ -65,4 +77,10 @@ type PayPeriodRecord struct {
 	ShiftOvershort      float64
 	StationID           primitive.ObjectID
 	StationName         string
+}
+
+// ProductNumberRecord struct
+type ProductNumberRecord struct {
+	Product string `bson:"_id"`
+	Qty     int    `bson:"qty"`
 }

@@ -9,10 +9,12 @@ type DBHandler interface {
 	GetCarWash(*RequestDates) ([]*NonFuelSale, error)
 	GetConfig() (*Config, error)
 	GetEmployee(primitive.ObjectID) (string, error)
+	GetEmployeeOS(*RequestDates) ([]*Sales, error)
 	GetMonthlyProducts(*RequestDates) ([]*NonFuelProduct, error)
 	GetMonthlySales(*RequestDates) ([]*Sales, error)
 	GetNonFuelCommission(string, primitive.ObjectID) (*CommissionSale, error)
 	GetPayPeriodSales(*RequestDates) ([]*Sales, error)
+	GetProductNumbers(*RequestDates) ([]*ProductNumberRecord, error)
 	GetStationMap() (map[primitive.ObjectID]*Station, error)
 }
 

@@ -30,7 +30,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: go1.x
-      CodeUri: s3://gsales-lambdas/xls-reports/ccf0a772eda8d5429729eaecfc5720e1
+      CodeUri: s3://gsales-lambdas/xls-reports/52ac6e83a46b0a462b7f99c2ba53d87e
       Handler: /report
       Role:
         Fn::GetAtt:

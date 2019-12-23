@@ -7,8 +7,7 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/awsservices"
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/model/monthlysales"
-	"github.com/pulpfree/gsales-xls-reports/model/payperiod"
+	"github.com/pulpfree/gsales-xls-reports/model/db"
 	"github.com/pulpfree/gsales-xls-reports/xlsx"
 )
 
@@ -16,6 +15,7 @@ import (
 type Report struct {
 	cfg        *config.Config
 	dates      *model.RequestDates
+	db         model.DBHandler
 	file       *xlsx.XLSX
 	filename   string
 	reportType *model.ReportType
@@ -30,12 +30,18 @@ const (
 var validType bool
 
 // New function
-func New(req *model.ReportRequest, cfg *config.Config) *Report {
+func New(req *model.ReportRequest, cfg *config.Config) (report *Report, err error) {
+	db, err := db.NewDB(cfg.GetMongoConnectURL(), cfg.DBName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Report{
 		cfg:        cfg,
 		dates:      req.Dates,
+		db:         db,
 		reportType: req.ReportType,
-	}
+	}, err
 }
 
 // ===================== Exported Methods ====================================================== //
@@ -82,21 +88,67 @@ func (r *Report) create() (err error) {
 
 	rt := *r.reportType
 	switch rt {
+	case model.BankCardsReport:
+		return r.createBankCardsReport()
+	case model.EmployeeOSReport:
+		return r.createEmployeeOSReport()
 	case model.MonthlySalesReport:
 		return r.createMonthlySales()
-
 	case model.PayPeriodReport:
 		return r.createPayPeriod()
+	case model.ProductNumbersReport:
+		return r.createProductNumbers()
 	}
+
+	return err
+}
+
+func (r *Report) createBankCardsReport() (err error) {
+
+	bc := &BankCard{
+		dates: r.dates,
+		db:    r.db,
+	}
+
+	records, err := bc.GetRecords()
+	defer r.db.Close()
+
+	r.file, err = xlsx.NewFile()
+	err = r.file.BankCards(records)
+	return err
+}
+
+func (r *Report) createEmployeeOSReport() (err error) {
+
+	eo := &EmployeeOS{
+		dates: r.dates,
+		db:    r.db,
+	}
+
+	records, err := eo.GetRecords()
+	defer r.db.Close()
+
+	r.file, err = xlsx.NewFile()
+	err = r.file.EmployeeOS(records)
 
 	return err
 }
 
 func (r *Report) createMonthlySales() (err error) {
 
-	sales, err := monthlysales.Init(r.dates, r.cfg)
-	records, err := sales.GetRecords()
-	defer sales.DB.Close()
+	cfg, err := r.db.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	ms := &MonthlySales{
+		cfg:   cfg,
+		dates: r.dates,
+		db:    r.db,
+	}
+
+	records, err := ms.GetRecords()
+	defer r.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.MonthlySales(records)
@@ -106,9 +158,12 @@ func (r *Report) createMonthlySales() (err error) {
 
 func (r *Report) createPayPeriod() (err error) {
 
-	pp, err := payperiod.Init(r.dates, r.cfg)
+	pp := &PayPeriod{
+		dates: r.dates,
+		db:    r.db,
+	}
 	records, err := pp.GetRecords()
-	defer pp.DB.Close()
+	defer pp.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.PayPeriod(records)
@@ -116,24 +171,39 @@ func (r *Report) createPayPeriod() (err error) {
 	return err
 }
 
+func (r *Report) createProductNumbers() (err error) {
+
+	pn := &ProductNumbers{
+		dates: r.dates,
+		db:    r.db,
+	}
+	records, err := pn.GetRecords()
+	defer pn.db.Close()
+
+	r.file, err = xlsx.NewFile()
+	err = r.file.ProductNumbers(records)
+
+	return err
+}
+
 // ===================== Helper Methods ======================================================== //
 
 func (r *Report) setFileName() {
-
 	rt := *r.reportType
 	switch rt {
+	case model.BankCardsReport:
+		r.filename = fmt.Sprintf("BankCardsReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
+	case model.EmployeeOSReport:
+		r.filename = fmt.Sprintf("EmployeeOSReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
 	case model.MonthlySalesReport:
 		r.filename = fmt.Sprintf("MonthlySalesReport_%s.xlsx", r.dates.DateFrom.Format(timeFormatShort))
 	case model.PayPeriodReport:
 		r.filename = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
+	case model.ProductNumbersReport:
+		r.filename = fmt.Sprintf("ProductNumbersReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
 	}
 }
 
 func (r *Report) getFileName() string {
 	return r.filename
-}
-
-func (r *Report) setReportType(rType string) (err error) {
-	// r.reportType, err = model.ReportStringToType(rType)
-	return err
 }

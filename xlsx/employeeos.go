@@ -8,8 +8,8 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/model"
 )
 
-// BankCards method
-func (x *XLSX) BankCards(records []*model.BankCardRecord) (err error) {
+// EmployeeOS method
+func (x *XLSX) EmployeeOS(records []*model.EmployeeOSRecord) (err error) {
 
 	f := x.file
 	sheetNm := "Sheet1"
@@ -17,10 +17,10 @@ func (x *XLSX) BankCards(records []*model.BankCardRecord) (err error) {
 	index := f.NewSheet(sheetNm)
 	f.SetActiveSheet(index)
 
-	x.setHeader(sheetNm, BankCardJSON)
-	x.setBankCardValues(sheetNm, records)
-	x.setBankCardTotalsRow(sheetNm)
-	f.SetSheetName(sheetNm, "Bank Cards")
+	x.setHeader(sheetNm, EmployeeOSJSON)
+	x.setEmployeeOSValues(sheetNm, records)
+	x.setEmployeeOSTotalsRow(sheetNm)
+	f.SetSheetName(sheetNm, "Employee Overshort")
 	err = f.SetDocProps(&excelize.DocProperties{
 		Title:   "Bank Cards Report",
 		Created: time.Now().Format(time.RFC3339),
@@ -29,7 +29,7 @@ func (x *XLSX) BankCards(records []*model.BankCardRecord) (err error) {
 	return err
 }
 
-func (x *XLSX) setBankCardValues(sheetNm string, records []*model.BankCardRecord) {
+func (x *XLSX) setEmployeeOSValues(sheetNm string, records []*model.EmployeeOSRecord) {
 
 	col := 1
 	row := 2
@@ -38,44 +38,38 @@ func (x *XLSX) setBankCardValues(sheetNm string, records []*model.BankCardRecord
 	lastRow = len(records) + 1
 
 	for _, r := range records {
-		x.displayCell(sheetNm, col, row, r.StationName)
+		x.displayCell(sheetNm, col, row, r.Employee)
 
 		col++
 		x.displayCell(sheetNm, col, row, r.RecordNumber)
 
 		col++
-		x.displayCell(sheetNm, col, row, r.BankAmex)
+		x.displayCell(sheetNm, col, row, r.StationName)
 
 		col++
-		x.displayCell(sheetNm, col, row, r.BankDiscover)
+		x.displayCell(sheetNm, col, row, r.OvershortShift)
 
 		col++
-		x.displayCell(sheetNm, col, row, r.BankGales)
+		x.displayCell(sheetNm, col, row, r.OvershortAttendant)
 
 		col++
-		x.displayCell(sheetNm, col, row, r.BankMC)
+		x.displayCell(sheetNm, col, row, r.OvershortDiff)
 
 		col++
-		x.displayCell(sheetNm, col, row, r.BankVisa)
-
-		col++
-		x.displayCell(sheetNm, col, row, r.CashDebit)
-
-		col++
-		x.displayCell(sheetNm, col, row, r.CashOther)
+		x.displayCell(sheetNm, col, row, r.DiscrepancyDescription)
 
 		col = 1
 		row++
 	}
 }
 
-func (x *XLSX) setBankCardTotalsRow(sheetNm string) {
+func (x *XLSX) setEmployeeOSTotalsRow(sheetNm string) {
 
 	f := x.file
 	totalsRow := lastRow + 1
 	var cell, colNm, formula string
-	const firstIteratorCol = 3
-	const lastIteratorCol = 9
+	const firstIteratorCol = 4
+	const lastIteratorCol = 6
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)

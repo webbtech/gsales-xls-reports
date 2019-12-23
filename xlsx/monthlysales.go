@@ -12,7 +12,7 @@ var firstRow int
 var lastRow int
 
 // MonthlySales method
-func (x *XLSX) MonthlySales(sales []*model.MonthlySales) (err error) {
+func (x *XLSX) MonthlySales(sales []*model.MonthlySaleRecord) (err error) {
 
 	f := x.file
 	sheetNm := "Sheet1"
@@ -32,7 +32,7 @@ func (x *XLSX) MonthlySales(sales []*model.MonthlySales) (err error) {
 	return err
 }
 
-func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySales) {
+func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleRecord) {
 
 	col := 1
 	row := 2

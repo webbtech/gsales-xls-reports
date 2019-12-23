@@ -1,12 +1,14 @@
 {
   "cSpell.ignoreWords": [
     "abcdefghijklmnopqrstuvwxyz",
+    "employeeos",
     "noexist",
     "spreadsheetml",
     "structs"
   ],
   "cSpell.words": [
     "dbmodel",
-    "dbmongo"
+    "dbmongo",
+    "osjson"
   ]
 }

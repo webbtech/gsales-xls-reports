@@ -72,7 +72,7 @@ func (x *XLSX) displayCell(sheetNm string, col int, row int, value interface{}) 
 
 	switch value.(type) {
 	case float64:
-		f.SetCellFloat(sheetNm, cell, value.(float64), 3, 64)
+		f.SetCellFloat(sheetNm, cell, value.(float64), 2, 64)
 
 	default:
 		f.SetCellValue(sheetNm, cell, value)
@@ -124,7 +124,7 @@ func toFixed(num float64, precision int) float64 {
 	return float64(round(num*output)) / output
 }
 
-func displayFloat(num interface{}) float64 {
+/* func displayFloat(num interface{}) float64 {
 	var ret float64
 	switch v := num.(type) {
 	case *float64:
@@ -141,4 +141,4 @@ func displayFloat(num interface{}) float64 {
 	}
 
 	return ret
-}
+} */

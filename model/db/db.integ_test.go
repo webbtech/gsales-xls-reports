@@ -21,8 +21,8 @@ import (
 const (
 	cfgHST        = int32(13)
 	dateMonth     = "2019-11"
-	dateDayStart  = "2019-08-01"
-	dateDayEnd    = "2019-08-16"
+	dateDayStart  = "2019-11-01"
+	dateDayEnd    = "2019-11-30"
 	defaultsFP    = "../../config/defaults.yml"
 	employeeIDStr = "5733c671982d828347021ed7"
 	employeeName  = "Grimstead, Kevin"
@@ -93,6 +93,13 @@ func (suite *IntegSuite) TestGetStationMap() {
 	suite.True(len(sm) > 0)
 }
 
+// TestGetEmployeeOS
+func (suite *IntegSuite) TestGetEmployeeOS() {
+	sales, err := suite.db.GetEmployeeOS(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
 // TestGetCarWash
 func (suite *IntegSuite) TestGetCarWash() {
 	sales, err := suite.db.GetCarWash(suite.dateMonth)
@@ -138,6 +145,13 @@ func (suite *IntegSuite) TestfetchBankCards() {
 	// fmt.Printf("records %+v\n", records[0])
 }
 
+// TestfetchEmployeeOS method
+func (suite *IntegSuite) TestfetchEmployeeOS() {
+	records, err := suite.db.fetchEmployeeOS(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(records) > 10)
+}
+
 // TestGetBankCardsError method
 // use this with modifications to the method to test error
 func (suite *IntegSuite) TestGetBankCardsError() {
@@ -178,7 +192,6 @@ func (suite *IntegSuite) TestfetchMonthlySales() {
 	sales, err := suite.db.fetchMonthlySales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(sales) > 0)
-	// fmt.Printf("sales %+v\n", sales[0])
 }
 
 // TestfetchPayPeriodSales method
@@ -186,7 +199,13 @@ func (suite *IntegSuite) TestfetchPayPeriodSales() {
 	records, err := suite.db.fetchPayPeriodSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(records) > 10)
-	// fmt.Printf("records[0] %+v\n", records[0])
+}
+
+// TestfetchProductNumbers method
+func (suite *IntegSuite) TestfetchProductNumbers() {
+	records, err := suite.db.fetchProductNumbers(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(records) > 10)
 }
 
 // TestfetchPayPeriodSales method

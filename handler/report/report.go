@@ -71,7 +71,17 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 			Timestamp: t.Unix(),
 		}, hdrs), nil
 	}
-	rpt := report.New(reportRequest, cfg)
+
+	rpt, err := report.New(reportRequest, cfg)
+	if err != nil {
+		return gatewayResponse(Response{
+			Code:      500,
+			Message:   fmt.Sprintf("error: %s", err.Error()),
+			Status:    "error",
+			Timestamp: t.Unix(),
+		}, hdrs), nil
+	}
+
 	url, err := rpt.CreateSignedURL()
 	if err != nil {
 		return gatewayResponse(Response{

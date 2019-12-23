@@ -36,8 +36,13 @@ const (
 	colStations     = "stations"
 )
 
-// noRecordsMsg constant
-const noRecordsMsg = "No records found matching criteria"
+// misc constants
+const (
+	noRecordsMsg     = "No records found matching criteria"
+	carWashProductID = "574707198bba4f0100582b83"
+)
+
+// primitive.ObjectIDFromHex("56cf1815982d82b0f3000006")
 
 // ======================== Exported Functions ================================================= //
 
@@ -124,6 +129,20 @@ func (db *MDB) GetStationMap() (map[primitive.ObjectID]*model.Station, error) {
 	return db.stationMap, err
 }
 
+// GetEmployeeOS method
+func (db *MDB) GetEmployeeOS(dates *model.RequestDates) (records []*model.Sales, err error) {
+	records, err = db.fetchEmployeeOS(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetEmployeeOS", Msg: noRecordsMsg}
+	}
+
+	return records, err
+}
+
 // GetMonthlySales method
 func (db *MDB) GetMonthlySales(dates *model.RequestDates) (records []*model.Sales, err error) {
 	records, err = db.fetchMonthlySales(dates.DateFrom, dates.DateTo)
@@ -162,6 +181,20 @@ func (db *MDB) GetPayPeriodSales(dates *model.RequestDates) (records []*model.Sa
 
 	if len(records) == 0 {
 		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetPayPeriodSales", Msg: noRecordsMsg}
+	}
+
+	return records, err
+}
+
+// GetProductNumbers method
+func (db *MDB) GetProductNumbers(dates *model.RequestDates) (records []*model.ProductNumberRecord, err error) {
+	records, err = db.fetchProductNumbers(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetProductNumbers", Msg: noRecordsMsg}
 	}
 
 	return records, err
@@ -269,6 +302,28 @@ func (db *MDB) fetchBankCards(startDate, endDate time.Time) (sales []*model.Sale
 
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}, primitive.E{Key: "recordNum", Value: 1}})
+	filter := bson.M{"recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
+	cur, err := col.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cur.All(ctx, &sales); err != nil {
+		return nil, err
+	}
+
+	return sales, err
+}
+
+// fetchEmployeeOS method
+func (db *MDB) fetchEmployeeOS(startDate, endDate time.Time) (sales []*model.Sales, err error) {
+
+	col := db.db.Collection(colSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key: "attendant.ID", Value: 1}, primitive.E{Key: "recordNum", Value: 1}})
 	filter := bson.M{"recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
 	cur, err := col.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -452,15 +507,136 @@ func (db *MDB) fetchPayPeriodSales(startDate, endDate time.Time) (sales []*model
 	return sales, err
 }
 
+func (db *MDB) fetchProductNumbers(startDate, endDate time.Time) (products []*model.ProductNumberRecord, err error) {
+
+	col := db.db.Collection(colNonFuelSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+
+	pipeline := mongo.Pipeline{
+		{
+			primitive.E{
+				Key: "$match",
+				Value: bson.D{
+					primitive.E{
+						Key: "recordDate",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$gte",
+								Value: startDate,
+							},
+						},
+					},
+					primitive.E{
+						Key: "recordDate",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$lte",
+								Value: endDate,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$lookup",
+				Value: bson.D{
+					primitive.E{
+						Key:   "from",
+						Value: colProducts,
+					},
+					primitive.E{
+						Key:   "localField",
+						Value: "productID",
+					},
+					primitive.E{
+						Key:   "foreignField",
+						Value: "_id",
+					},
+					primitive.E{
+						Key:   "as",
+						Value: "product",
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key:   "$unwind",
+				Value: "$product",
+			},
+		},
+		{
+			primitive.E{
+				Key: "$match",
+				Value: bson.D{
+					primitive.E{
+						Key:   "product.type",
+						Value: "report1",
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$group",
+				Value: bson.D{
+					primitive.E{
+						Key:   "_id",
+						Value: "$product.name",
+					},
+					primitive.E{
+						Key: "qty",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$sum",
+								Value: "$qty.sold",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$sort",
+				Value: bson.D{
+					primitive.E{
+						Key:   "_id",
+						Value: 1,
+					},
+				},
+			},
+		},
+	}
+
+	cur, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	for cur.Next(ctx) {
+		var record model.ProductNumberRecord
+		cur.Decode(&record)
+		products = append(products, &record)
+	}
+
+	return products, err
+}
+
 func (db *MDB) fetchCarWash(startDate, endDate time.Time) (sales []*model.NonFuelSale, err error) {
 
 	col := db.db.Collection(colNonFuelSales)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	cwProductID, _ := primitive.ObjectIDFromHex(carWashProductID)
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}, primitive.E{Key: "recordNum", Value: 1}})
-	filter := bson.M{"recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
+	filter := bson.M{"productID": cwProductID, "recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
 	cur, err := col.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, err

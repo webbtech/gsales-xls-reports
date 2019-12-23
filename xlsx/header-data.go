@@ -51,6 +51,47 @@ func BankCardJSON() string {
 	]`
 }
 
+// EmployeeOSJSON function
+func EmployeeOSJSON() string {
+	return `[
+		{
+			"column": "A",
+			"label": "Employee",
+			"width": 20.00
+		},
+		{
+			"column": "B",
+			"label": "Record Number",
+			"width": 15.00
+		},
+		{
+			"column": "C",
+			"label": "Station",
+			"width": 22.00
+		},
+		{
+			"column": "D",
+			"label": "Shift Overshort",
+			"width": 14.00
+		},
+		{
+			"column": "E",
+			"label": "Attendant Overshort",
+			"width": 18.00
+		},
+		{
+			"column": "F",
+			"label": "Overshort Diff",
+			"width": 13.00
+		},
+		{
+			"column": "G",
+			"label": "Discrepancy Description",
+			"width": 35.00
+		}
+	]`
+}
+
 // MonthlySalesJSON function
 func MonthlySalesJSON() string {
 	return `[
@@ -253,22 +294,43 @@ func PayPeriodJSON() string {
 		{
 			"column": "G",
 			"label": "Commission Eligible Qty",
-			"width": 22.5
+			"width": 21.00
 		},
 		{
 			"column": "H",
-			"label": "Commission Amount",
-			"width": 20.00
+			"label": "Commission Eligible Sales",
+			"width": 21.00
 		},
 		{
 			"column": "I",
+			"label": "Commission Amount",
+			"width": 18.00
+		},
+		{
+			"column": "J",
 			"label": "Number Car Washes",
 			"width": 19.00
 		},
 		{
-			"column": "J",
+			"column": "K",
 			"label": "Attendant Adjustment",
 			"width": 21.00
+		}
+	]`
+}
+
+// ProductNumbersJSON function
+func ProductNumbersJSON() string {
+	return `[
+		{
+			"column": "A",
+			"label": "Product",
+			"width": 20.00
+		},
+		{
+			"column": "B",
+			"label": "Quantity",
+			"width": 15.00
 		}
 	]`
 }
