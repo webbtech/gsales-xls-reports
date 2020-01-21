@@ -11,17 +11,12 @@ Parameters:
   ParamKMSKeyID:
     Description: KMS key id
     Type: String
-  # ParamThundraKey:
-  #   Description: thundra.io API key
-  #   Type: String
-  # ParamLambdaBucket:
-  #   Description: Bucket for lambda deployment
-  #   Type: String
+  ParamThundraKey:
+    Description: thundra.io API key
+    Type: String
   ParamReportBucket:
     Description: Bucket for report files
     Type: String
-  # ParamAuthLambda:
-  #   Type: String
   ParamProjectName:
     Description: Project name
     Type: String
@@ -33,19 +28,47 @@ Resources:
     DependsOn: Lambda
     Properties:
       StageName: Prod
+      # We're adding all essential headers (I hope) in the handler files, this property is not required
       # Cors: "'*'"
-      Cors:
-        AllowMethods: "'GET,OPTIONS,POST,PUT'"
-        AllowHeaders: "'Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
+      # Cors:
+      #   AllowMethods: "'GET,OPTIONS,POST,PUT'"
+      #   AllowHeaders: "'Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      #   AllowOrigin: "'*'"
       # EndpointConfiguration: REGIONAL
-      # Auth:
-      #   DefaultAuthorizer: LambdaTokenAuthorizer
-      #   Authorizers:
-      #     LambdaTokenAuthorizer:
-      #       FunctionArn: !Sub "${ParamAuthLambda}"
-      #       Identity:
-      #         ReauthorizeEvery: 300
+      Auth:
+        DefaultAuthorizer: LambdaTokenAuthorizer
+        Authorizers:
+          LambdaTokenAuthorizer:
+            FunctionArn: !GetAtt AuthLambda.Arn
+            Identity:
+              ReauthorizeEvery: 300
+      # Documentation for below: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
+      # Oddly, this property does not work with sam local
+      GatewayResponses:
+        UNAUTHORIZED:
+          StatusCode: 401
+          ResponseTemplates:
+            "application/json": '{ "message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              # Access-Control-Expose-Headers: "'WWW-Authenticate'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
+              # WWW-Authenticate: >- 
+                # 'Bearer realm="admin"'
+
+      # Docs for this at: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
+      # Domain:
+      #   DomainName: String # REQUIRED | custom domain name being configured on the api, "www.example.com"
+      #   CertificateARN: String # REQUIRED | Must be a valid [certificate ARN](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html), and for EDGE endpoint configuration the certificate must be in us-east-1
+      #   EndpointConfiguration: "EDGE" # optional | Default value is REGIONAL | Accepted values are EDGE | REGIONAL
+      #   BasePath:
+      #     - String # optional | Default value is '/' | List of basepaths to be configured with the ApiGateway Domain Name 
+      #   Route53: # optional | Default behavior is to treat as None - does not create Route53 resources | Enable these settings to create Route53 Recordsets
+      #     HostedZoneId: String # REQUIRED | Must be a hostedzoneid value of a [`AWS::Route53::HostedZone`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53-hostedzone.html) resource
+      #     EvaluateTargetHealth: Boolean # optional | default value is false
+      #     DistributionDomainName: String # OPTIONAL if the EndpointConfiguration is EDGE | Default points to Api Gateway Distribution | Domain name of a [cloudfront distribution](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudfront-distribution.html) 
+
 
   Lambda:
     Type: AWS::Serverless::Function
@@ -54,22 +77,15 @@ Resources:
       CodeUri: ./dist
       Handler: /report
       Role: !GetAtt LambdaRole.Arn
-      # Environment:
-        # Variables:
-        #   API_URL: !Join
-        #     - ''
-        #     - - https://
-        #       - !Ref ServerlessRestApi
-        #       - .execute-api.
-        #       - !Ref 'AWS::Region'
-        #       - .amazonaws.com
-        #       - /Prod/
-      # Timeout: 10
       Timeout: 20 # for testing only
       MemorySize: 512
       Environment:
         Variables:
           Stage: prod
+          thundra_apiKey: !Ref ParamThundraKey
+          thundra_agent_lambda_report_cloudwatch_enable: false
+          thundra_lambda_warmup_warmupAware: true
+          thundra_agent_lambda_warmup_warmupAware: true
       VpcConfig:
         # TODO: these should be extracted into params and .env file
         SecurityGroupIds:
@@ -79,20 +95,46 @@ Resources:
           - subnet-0da8d176
           - subnet-7f092816
       Tags:
-        BillTo: 'Universal'
+        BillTo: 'Gales'
       Events:
         Report:
           Type: Api
           Properties:
             Path: /report
-            Method: post
+            Method: POST
             RestApiId: !Ref RestApi
+            Auth:
+              Authorizer: LambdaTokenAuthorizer
         Ping:
           Type: Api
           Properties:
             Path: /report
-            Method: get
+            Method: GET
             RestApiId: !Ref RestApi
+            Auth:
+              Authorizer: NONE
+        Options:
+          Type: Api
+          Properties:
+            Path: /report
+            Method: OPTIONS
+            RestApiId: !Ref RestApi
+            Auth:
+              Authorizer: NONE
+
+  AuthLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./dist
+      Handler: /authorizer
+      Runtime: go1.x
+      Role: !GetAtt AuthLambdaRole.Arn
+      Environment:
+        Variables:
+          thundra_apiKey: !Ref ParamThundraKey
+          thundra_agent_lambda_report_cloudwatch_enable: false
+          thundra_lambda_warmup_warmupAware: true
+          thundra_agent_lambda_warmup_warmupAware: true
       Tags:
         BillTo: 'Gales'
 
@@ -168,6 +210,49 @@ Resources:
             - ec2:DescribeNetworkInterfaces
             Resource: '*'
 
+  AuthLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: FunctionParameterAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ssm:GetParametersByPath
+            Resource:
+              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/${ParamProjectName}*
+      - PolicyName: FunctionKMS
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - kms:Decrypt
+            - kms:DescribeKey
+            Resource:
+              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${ParamKMSKeyID}
+      - PolicyName: FunctionLogAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+
 Outputs:
   ApiId:
     Description: API ID
@@ -182,6 +267,12 @@ Outputs:
   LambdaArn:
     Description: "Lambda ARN"
     Value: !GetAtt Lambda.Arn
+  AuthLambdaArn:
+    Description: "Authorizer Lambda ARN"
+    Value: !GetAtt AuthLambda.Arn
   LambdaRoleArn:
     Description: "Lambda Role ARN"
     Value: !GetAtt LambdaRole.Arn
+  AuthLambdaRoleArn:
+    Description: "Authorizer Lambda Role ARN"
+    Value: !GetAtt AuthLambdaRole.Arn

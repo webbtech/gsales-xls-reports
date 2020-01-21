@@ -104,8 +104,8 @@ func (s *IntegSuite) TestsetFileName() {
 	s.Equal(fileNm, expectedFileNm)
 }
 
-// TestGetRecords method
-func (s *IntegSuite) TestGetRecords() {
+// TestShiftTypeGetRecords method
+func (s *IntegSuite) TestShiftTypeGetRecords() {
 	var err error
 
 	s.report, err = New(s.bankCardReportReq, cfg)
@@ -128,18 +128,6 @@ func (s *IntegSuite) TestGetRecords() {
 	s.NoError(err)
 	s.True(len(esRecs) > 10)
 
-	s.report, err = New(s.monthReportReq, cfg)
-	s.NoError(err)
-	conf, _ := s.report.db.GetConfig()
-	ms := &MonthlySales{
-		cfg:   conf,
-		dates: s.report.dates,
-		db:    s.report.db,
-	}
-	msRecs, err := ms.GetRecords()
-	s.NoError(err)
-	s.True(len(msRecs) > 10)
-
 	s.report, err = New(s.payPeriodReportReq, cfg)
 	s.NoError(err)
 	pp := &PayPeriod{
@@ -159,6 +147,23 @@ func (s *IntegSuite) TestGetRecords() {
 	pnRecs, err := pn.GetRecords()
 	s.NoError(err)
 	s.True(len(pnRecs) > 10)
+}
+
+// TestMonthlyGetRecords method
+func (s *IntegSuite) TestMonthlyGetRecords() {
+	var err error
+
+	s.report, err = New(s.monthReportReq, cfg)
+	s.NoError(err)
+	conf, _ := s.report.db.GetConfig()
+	ms := &MonthlySales{
+		cfg:   conf,
+		dates: s.report.dates,
+		db:    s.report.db,
+	}
+	msRecs, err := ms.GetRecords()
+	s.NoError(err)
+	s.True(len(msRecs) > 10)
 }
 
 // Testcreate method

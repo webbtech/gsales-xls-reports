@@ -2,14 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/pulpfree/gsales-xls-reports/pkgerrors"
 	"github.com/pulpfree/gsales-xls-reports/report"
 	"github.com/pulpfree/gsales-xls-reports/validate"
 	log "github.com/sirupsen/logrus"
+	"github.com/thundra-io/thundra-lambda-agent-go/thundra"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -29,7 +31,10 @@ type SignedURL struct {
 	URL string `json:"url"`
 }
 
-var cfg *config.Config
+var (
+	cfg      *config.Config
+	stdError *pkgerrors.StdError
+)
 
 func init() {
 	cfg = &config.Config{}
@@ -42,9 +47,19 @@ func init() {
 // HandleRequest function
 func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
+	// see following link for tips
+	// https://stackoverflow.com/questions/53298478/has-been-blocked-by-cors-policy-response-to-preflight-request-doesn-t-pass-acce
+
 	hdrs := make(map[string]string)
 	hdrs["Content-Type"] = "application/json"
 	hdrs["Access-Control-Allow-Origin"] = "*"
+	hdrs["Access-Control-Allow-Methods"] = "GET,OPTIONS,POST,PUT"
+	hdrs["Access-Control-Allow-Headers"] = "Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" // just added
+
+	if req.HTTPMethod == "OPTIONS" {
+		return events.APIGatewayProxyResponse{Body: string("null"), Headers: hdrs, StatusCode: 200}, nil
+	}
+
 	t := time.Now()
 
 	// If this is a ping test, intercept and return
@@ -55,7 +70,7 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 			Data:      "pong",
 			Status:    "success",
 			Timestamp: t.Unix(),
-		}, hdrs), nil
+		}, hdrs, nil), nil
 	}
 
 	var r *model.RequestInput
@@ -65,47 +80,59 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 	reportRequest, err := validate.SetRequest(r)
 	if err != nil {
 		return gatewayResponse(Response{
-			Code:      500,
-			Message:   fmt.Sprintf("error: %s", err.Error()),
-			Status:    "error",
 			Timestamp: t.Unix(),
-		}, hdrs), nil
+		}, hdrs, err), nil
 	}
 
 	rpt, err := report.New(reportRequest, cfg)
 	if err != nil {
 		return gatewayResponse(Response{
-			Code:      500,
-			Message:   fmt.Sprintf("error: %s", err.Error()),
-			Status:    "error",
 			Timestamp: t.Unix(),
-		}, hdrs), nil
+		}, hdrs, err), nil
 	}
 
 	url, err := rpt.CreateSignedURL()
 	if err != nil {
 		return gatewayResponse(Response{
-			Code:      500,
-			Message:   fmt.Sprintf("error: %s", err.Error()),
-			Status:    "error",
 			Timestamp: t.Unix(),
-		}, hdrs), nil
+		}, hdrs, err), nil
 	}
-	log.Infof("signed url created %s", url)
+
+	urlStr := url[0:100]
+	log.Infof("signed url created %s", urlStr)
 
 	return gatewayResponse(Response{
 		Code:      201,
 		Data:      SignedURL{URL: url},
 		Status:    "success",
 		Timestamp: t.Unix(),
-	}, hdrs), nil
+	}, hdrs, nil), nil
 }
 
 func main() {
-	lambda.Start(HandleRequest)
+	lambda.Start(thundra.Wrap(HandleRequest))
+	// lambda.Start(HandleRequest)
 }
 
-func gatewayResponse(resp Response, hdrs map[string]string) events.APIGatewayProxyResponse {
+func gatewayResponse(resp Response, hdrs map[string]string, err error) events.APIGatewayProxyResponse {
+
+	if err != nil {
+		resp.Code = 500
+		resp.Status = "error"
+		log.Error(err)
+		// send friendly error to client
+		if ok := errors.As(err, &stdError); ok {
+			resp.Message = stdError.Msg
+		} else {
+			resp.Message = err.Error()
+		}
+	}
+	body, _ := json.Marshal(&resp)
+
+	return events.APIGatewayProxyResponse{Body: string(body), Headers: hdrs, StatusCode: resp.Code}
+}
+
+/* func gatewayResponse(resp Response, hdrs map[string]string) events.APIGatewayProxyResponse {
 
 	body, _ := json.Marshal(&resp)
 	if resp.Status == "error" {
@@ -113,4 +140,4 @@ func gatewayResponse(resp Response, hdrs map[string]string) events.APIGatewayPro
 	}
 
 	return events.APIGatewayProxyResponse{Body: string(body), Headers: hdrs, StatusCode: resp.Code}
-}
+} */

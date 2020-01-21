@@ -18,16 +18,17 @@ type Attendant struct {
 
 // Cash struct
 type Cash struct {
-	Bills          *float64 `bson:"bills" json:"bills"`
-	Debit          *float64 `bson:"debit" json:"debit"`
-	DieselDiscount *float64 `bson:"dieselDiscount" json:"dieselDiscount"`
-	DriveOffNSF    *float64 `bson:"driveOffNSF" json:"driveOffNSF"`
-	GiftCertRedeem *float64 `bson:"giftCertRedeem" json:"giftCertRedeem"`
-	LotteryPayout  *float64 `bson:"lotteryPayout" json:"lotteryPayout"`
-	Other          *float64 `bson:"other" json:"other"`
-	OSAdjusted     *float64 `bson:"osAdjusted" json:"osAdjusted"`
-	Payout         *float64 `bson:"payout" json:"payout"`
-	WriteOff       *float64 `bson:"writeOff" json:"writeOff"`
+	Bills              *float64 `bson:"bills" json:"bills"`
+	Debit              *float64 `bson:"debit" json:"debit"`
+	DieselDiscount     *float64 `bson:"dieselDiscount" json:"dieselDiscount"`
+	DriveOffNSF        *float64 `bson:"driveOffNSF" json:"driveOffNSF"`
+	GalesLoyaltyRedeem *float64 `bson:"galesLoyaltyRedeem" json:"galesLoyaltyRedeem"`
+	GiftCertRedeem     *float64 `bson:"giftCertRedeem" json:"giftCertRedeem"`
+	LotteryPayout      *float64 `bson:"lotteryPayout" json:"lotteryPayout"`
+	Other              *float64 `bson:"other" json:"other"`
+	OSAdjusted         *float64 `bson:"osAdjusted" json:"osAdjusted"`
+	Payout             *float64 `bson:"payout" json:"payout"`
+	WriteOff           *float64 `bson:"writeOff" json:"writeOff"`
 }
 
 // Config struct
@@ -74,9 +75,11 @@ type NonFuelProduct struct {
 	Qty   int     `bson:"qty"`
 	Sales float64 `bson:"sales"`
 	ID    struct {
-		Station   primitive.ObjectID `bson:"station"`
-		RecordNum string             `bson:"recordNum"`
-		Product   string             `bson:"product"`
+		Station         primitive.ObjectID `bson:"station"`
+		RecordNum       string             `bson:"recordNum"`
+		ProductCategory string             `bson:"productCategory"`
+		ProductName     string             `bson:"productName"`
+		ProductType     string             `bson:"productType"`
 	} `bson:"_id"`
 }
 

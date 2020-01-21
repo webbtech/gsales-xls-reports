@@ -12,8 +12,9 @@ clean:
 
 build: clean
 	@for dir in `ls handler`; do \
-		GOOS=linux go build -o dist/$$dir github.com/pulpfree/gsales-xls-reports/handler/$$dir; \
+		GOOS=linux go build -o dist/$$dir github.com/pulpfree/$(PROJECT_NAME)/handler/$$dir; \
 	done
+	@GOOS=linux go build -o dist/authorizer github.com/pulpfree/$(PROJECT_NAME)/authorizer;
 	@cp ./config/defaults.yml dist/
 	@echo "build successful"
 
@@ -55,12 +56,9 @@ awsdeploy:
 	--force-upload \
 	--parameter-overrides \
 		ParamKMSKeyID=$(KMS_KEY_ID) \
-		ParamReportBucket=${AWS_REPORT_BUCKET}
-
-# ParamLambdaBucket=$(AWS_BUCKET_NAME)
-# ParamProjectName=$(PROJECT_NAME) \
-#			ParamKeyExpiration=$(EXPIRATION) \
-#			ParamENV=$(ENV)
+		ParamReportBucket=${AWS_REPORT_BUCKET} \
+		ParamProjectName=$(PROJECT_NAME) \
+		ParamThundraKey=$(THUNDRA_API_KEY)
 
 describe:
 	@aws cloudformation describe-stacks \

@@ -27,8 +27,6 @@ const (
 	timeFormatLong  = "2006-01-02"
 )
 
-var validType bool
-
 // New function
 func New(req *model.ReportRequest, cfg *config.Config) (report *Report, err error) {
 	db, err := db.NewDB(cfg.GetMongoConnectURL(), cfg.DBName)

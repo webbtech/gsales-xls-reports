@@ -1,6 +1,8 @@
 package report
 
 import (
+	"fmt"
+
 	"github.com/pulpfree/gsales-xls-reports/model"
 )
 
@@ -102,11 +104,12 @@ func (ms *MonthlySales) setMonthlySalesProducts() (err error) {
 	for _, s := range ms.records {
 		for _, p := range products {
 			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
-				if p.ID.Product == "cigarettes" {
+				fmt.Printf("product %+v\n", p)
+				if p.ID.ProductCategory == "cigarettes" {
 					s.ProductCigarettesQty = p.Qty
 					s.ProductCigarettesSales = p.Sales
 				}
-				if p.ID.Product == "oil" {
+				if p.ID.ProductCategory == "oil" {
 					s.ProductOilQty = p.Qty
 					s.ProductOilSales = p.Sales
 				}

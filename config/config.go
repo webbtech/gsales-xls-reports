@@ -202,10 +202,11 @@ func (c *Config) setDBConnectURL() *Config {
 	return c
 }
 
-// Copies required fields from the defaults to the Config struct
+// Copies required fields from the defaults to the config struct
 func (c *Config) setFinal() (err error) {
 
 	c.AWSRegion = defs.AWSRegion
+	c.CognitoClientID = defs.CognitoClientID
 	c.S3Bucket = defs.S3Bucket
 	c.DBName = defs.DBName
 	err = c.validateStage()

@@ -38,11 +38,10 @@ const (
 
 // misc constants
 const (
-	noRecordsMsg     = "No records found matching criteria"
-	carWashProductID = "574707198bba4f0100582b83"
+	noRecordsMsg          = "No records found matching criteria"
+	carWashProductID      = "574707198bba4f0100582b83"
+	galesLoyaltyProductID = ""
 )
-
-// primitive.ObjectIDFromHex("56cf1815982d82b0f3000006")
 
 // ======================== Exported Functions ================================================= //
 
@@ -410,8 +409,16 @@ func (db *MDB) fetchMonthlyNonFuel(startDate, endDate time.Time) (docs []*model.
 								Value: "$stationID",
 							},
 							primitive.E{
-								Key:   "product",
+								Key:   "productCategory",
 								Value: "$product.category",
+							},
+							primitive.E{
+								Key:   "productType",
+								Value: "$product.type",
+							},
+							primitive.E{
+								Key:   "productName",
+								Value: "$product.name",
 							},
 						},
 					},
