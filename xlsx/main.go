@@ -95,11 +95,12 @@ func (x *XLSX) setHeader(sheetNm string, jsonFunc getHeaderJSON) {
 	firstCell, _ := excelize.CoordinatesToCellName(1, rowNo)
 	lastCell, _ := excelize.CoordinatesToCellName(len(hdrs), rowNo)
 
-	for _, h := range hdrs {
-		col, _ := excelize.ColumnNameToNumber(h.Column)
+	for i, h := range hdrs {
+		col := i + 1
+		colNm, _ := excelize.ColumnNumberToName(col)
 		cell, _ = excelize.CoordinatesToCellName(col, rowNo)
 		f.SetCellValue(sheetNm, cell, h.Label)
-		f.SetColWidth(sheetNm, h.Column, h.Column, h.Width)
+		f.SetColWidth(sheetNm, colNm, colNm, h.Width)
 	}
 
 	f.SetCellStyle(sheetNm, firstCell, lastCell, style)

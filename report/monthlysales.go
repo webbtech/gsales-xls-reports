@@ -1,8 +1,6 @@
 package report
 
 import (
-	"fmt"
-
 	"github.com/pulpfree/gsales-xls-reports/model"
 )
 
@@ -26,7 +24,18 @@ func (ms *MonthlySales) GetRecords() ([]*model.MonthlySaleRecord, error) {
 		return nil, err
 	}
 
-	err = ms.setMonthlySalesProducts()
+	err = ms.setSalesProducts()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setCarWashes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setGalesLoyalty()
+
 	return ms.records, err
 }
 
@@ -69,6 +78,7 @@ func (ms *MonthlySales) setRecords() (err error) {
 			CashDebit:              model.SetFloat(s.Cash.Debit),
 			CashDieselDiscount:     model.SetFloat(s.Cash.DieselDiscount),
 			CashDriveOffNSF:        model.SetFloat(s.Cash.DriveOffNSF),
+			CashGalesLoyaltyRedeem: model.SetFloat(s.Cash.GalesLoyaltyRedeem),
 			CashGiftCertRedeem:     model.SetFloat(s.Cash.GiftCertRedeem),
 			CashLotteryPayout:      model.SetFloat(s.Cash.LotteryPayout),
 			CashOSAdjusted:         model.SetFloat(s.Cash.OSAdjusted),
@@ -93,9 +103,9 @@ func (ms *MonthlySales) setRecords() (err error) {
 	return err
 }
 
-// setSalesProducts
+// setSalesProducts method
 // set values for cigarettes and oil category products
-func (ms *MonthlySales) setMonthlySalesProducts() (err error) {
+func (ms *MonthlySales) setSalesProducts() (err error) {
 
 	products, err := ms.db.GetMonthlyProducts(ms.dates)
 	if err != nil {
@@ -104,7 +114,6 @@ func (ms *MonthlySales) setMonthlySalesProducts() (err error) {
 	for _, s := range ms.records {
 		for _, p := range products {
 			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
-				fmt.Printf("product %+v\n", p)
 				if p.ID.ProductCategory == "cigarettes" {
 					s.ProductCigarettesQty = p.Qty
 					s.ProductCigarettesSales = p.Sales
@@ -117,5 +126,33 @@ func (ms *MonthlySales) setMonthlySalesProducts() (err error) {
 		}
 	}
 
+	return err
+}
+
+// setCarWashes method
+func (ms *MonthlySales) setCarWashes() (err error) {
+	products, err := ms.db.GetCarWash(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range products {
+			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
+				// fmt.Printf("p.Qty %+v\n", p.Qty)
+				s.CarWash = p.Qty.Sold
+			}
+		}
+	}
+	return err
+}
+
+// setGalesLoyalty method
+func (ms *MonthlySales) setGalesLoyalty() (err error) {
+	docs, err := ms.db.GetMonthlyGalesLoyalty(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range docs {
+			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
+				// fmt.Printf("p.Qty %+v\n", p.Qty)
+				s.GalesLoyalty = p.Qty.Sold
+			}
+		}
+	}
 	return err
 }

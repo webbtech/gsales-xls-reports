@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	monthDate      = "2019-10"
+	// monthDate      = "2019-12"
+	monthDate      = "2020-01"
 	periodDateFrom = "2019-11-01"
 	periodDateTo   = "2019-11-30"
 	defaultsFP     = "../config/defaults.yml"
@@ -155,12 +156,14 @@ func (s *IntegSuite) TestMonthlyGetRecords() {
 
 	s.report, err = New(s.monthReportReq, cfg)
 	s.NoError(err)
+
 	conf, _ := s.report.db.GetConfig()
 	ms := &MonthlySales{
 		cfg:   conf,
 		dates: s.report.dates,
 		db:    s.report.db,
 	}
+
 	msRecs, err := ms.GetRecords()
 	s.NoError(err)
 	s.True(len(msRecs) > 10)
@@ -190,30 +193,51 @@ func (s *IntegSuite) Testcreate() {
 	s.NoError(err)
 }
 
-// TestSaveToDisk method
-func (s *IntegSuite) TestSaveToDisk() {
+// TestSaveProductNumbersToDisk method
+func (s *IntegSuite) TestSaveProductNumbersToDisk() {
 	var err error
-	/* s.report, err = New(s.bankCardReportReq, cfg)
+
+	s.report, err = New(s.productNumbersReportReq, cfg)
+	s.NoError(err)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
+}
+
+// TestSaveEmployeeOSToDisk method
+func (s *IntegSuite) TestSaveEmployeeOSToDisk() {
+	var err error
 
 	s.report, err = New(s.employeeOSReportReq, cfg)
 	s.NoError(err)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
+}
 
-	s.report, err = New(s.monthReportReq, cfg)
+// TestSaveBankCardToDisk method
+func (s *IntegSuite) TestSaveBankCardToDisk() {
+	var err error
+
+	s.report, err = New(s.bankCardReportReq, cfg)
 	_, err = s.report.SaveToDisk("../tmp")
-	s.NoError(err) */
+	s.NoError(err)
+}
+
+// TestSavePayPeriodToDisk method
+func (s *IntegSuite) TestSavePayPeriodToDisk() {
+	var err error
 
 	s.report, err = New(s.payPeriodReportReq, cfg)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
+}
 
-	/* s.report, err = New(s.productNumbersReportReq, cfg)
-	s.NoError(err)
+// TestSaveMonthlyToDisk method
+func (s *IntegSuite) TestSaveMonthlyToDisk() {
+	var err error
+
+	s.report, err = New(s.monthReportReq, cfg)
 	_, err = s.report.SaveToDisk("../tmp")
-	s.NoError(err) */
+	s.NoError(err)
 }
 
 // TestCreateSignedURL method

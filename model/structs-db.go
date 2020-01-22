@@ -16,6 +16,17 @@ type Attendant struct {
 	Name              string             `bson:"name" json:"name"`
 }
 
+// CarWashProduct struct
+/* type CarWashProduct struct {
+	Qty struct {
+		Open  int `bson:"open"`
+		Sold  int `bson:"sold"`
+		Close int `bson:"close"`
+	} `bson:"qty"`
+	RecordNum string             `bson:"recordNum"`
+	StationID primitive.ObjectID `bson:"stationID"`
+} */
+
 // Cash struct
 type Cash struct {
 	Bills              *float64 `bson:"bills" json:"bills"`
@@ -78,8 +89,6 @@ type NonFuelProduct struct {
 		Station         primitive.ObjectID `bson:"station"`
 		RecordNum       string             `bson:"recordNum"`
 		ProductCategory string             `bson:"productCategory"`
-		ProductName     string             `bson:"productName"`
-		ProductType     string             `bson:"productType"`
 	} `bson:"_id"`
 }
 

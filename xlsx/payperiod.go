@@ -77,7 +77,7 @@ func (x *XLSX) setPayPeriodTotalsRow(sheetNm string) {
 	totalsRow := lastRow + 1
 	var cell, colNm, formula string
 	const firstIteratorCol = 4
-	const lastIteratorCol = 9
+	const lastIteratorCol = 10
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
@@ -89,7 +89,7 @@ func (x *XLSX) setPayPeriodTotalsRow(sheetNm string) {
 	f.SetCellStyle(sheetNm, cell, cell, boldStyle)
 
 	for c := firstIteratorCol; c <= lastIteratorCol; c++ {
-		if c == 7 || c == 9 {
+		if c == 7 || c == 10 {
 			style = numStyle
 		} else {
 			style = floatStyle

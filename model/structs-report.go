@@ -38,10 +38,12 @@ type MonthlySaleRecord struct {
 	BobsGiftCertificates   float64
 	BobsNonFuelAdjustments float64
 	BobsSales              float64
+	CarWash                int
 	CashBills              float64
 	CashDebit              float64
 	CashDieselDiscount     float64
 	CashDriveOffNSF        float64
+	CashGalesLoyaltyRedeem float64
 	CashGiftCertRedeem     float64
 	CashLotteryPayout      float64
 	CashOSAdjusted         float64
@@ -53,6 +55,7 @@ type MonthlySaleRecord struct {
 	FuelSalesHST           float64
 	FuelSalesOther         float64
 	FuelSalesTotal         float64
+	GalesLoyalty           int
 	GiftCertificates       float64
 	NonFuelTotal           float64
 	ProductCigarettesQty   int

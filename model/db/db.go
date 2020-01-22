@@ -38,10 +38,12 @@ const (
 
 // misc constants
 const (
-	noRecordsMsg          = "No records found matching criteria"
-	carWashProductID      = "574707198bba4f0100582b83"
-	galesLoyaltyProductID = ""
+	noRecordsMsg     = "No records found matching criteria"
+	carWashProductID = "574707198bba4f0100582b83"
 )
+
+// slice of Gales Loyalty product ids
+var galesLoyaltyProductIDs = []string{"5e2080472dbbd30008721739", "5e1f63167934140007cc6c98"}
 
 // ======================== Exported Functions ================================================= //
 
@@ -137,6 +139,20 @@ func (db *MDB) GetEmployeeOS(dates *model.RequestDates) (records []*model.Sales,
 
 	if len(records) == 0 {
 		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetEmployeeOS", Msg: noRecordsMsg}
+	}
+
+	return records, err
+}
+
+// GetMonthlyGalesLoyalty method
+func (db *MDB) GetMonthlyGalesLoyalty(dates *model.RequestDates) (records []*model.NonFuelSale, err error) {
+	records, err = db.fetchMonthlyGalesLoyalty(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetMonthlyGalesLoyalty", Msg: noRecordsMsg}
 	}
 
 	return records, err
@@ -336,6 +352,33 @@ func (db *MDB) fetchEmployeeOS(startDate, endDate time.Time) (sales []*model.Sal
 	return sales, err
 }
 
+func (db *MDB) fetchMonthlyGalesLoyalty(startDate, endDate time.Time) (docs []*model.NonFuelSale, err error) {
+
+	col := db.db.Collection(colNonFuelSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pIDs := make([]primitive.ObjectID, len(galesLoyaltyProductIDs))
+	for i := range galesLoyaltyProductIDs {
+		pIDs[i], _ = primitive.ObjectIDFromHex(galesLoyaltyProductIDs[i])
+	}
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key: "stationID", Value: 1}, primitive.E{Key: "recordNum", Value: 1}})
+	filter := bson.M{"productID": bson.M{"$in": pIDs}, "recordDate": bson.M{"$gte": startDate, "$lte": endDate}}
+	cur, err := col.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+
+	return docs, err
+}
+
 // examples see: https://github.com/simagix/mongo-go-examples/blob/master/examples/aggregate_array_test.go
 func (db *MDB) fetchMonthlyNonFuel(startDate, endDate time.Time) (docs []*model.NonFuelProduct, err error) {
 
@@ -411,14 +454,6 @@ func (db *MDB) fetchMonthlyNonFuel(startDate, endDate time.Time) (docs []*model.
 							primitive.E{
 								Key:   "productCategory",
 								Value: "$product.category",
-							},
-							primitive.E{
-								Key:   "productType",
-								Value: "$product.type",
-							},
-							primitive.E{
-								Key:   "productName",
-								Value: "$product.name",
 							},
 						},
 					},

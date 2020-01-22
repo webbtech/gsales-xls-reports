@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	cfgHST        = int32(13)
-	dateMonth     = "2019-11"
+	cfgHST = int32(13)
+	// dateMonth     = "2019-11"
+	dateMonth     = "2020-01"
 	dateDayStart  = "2019-11-01"
 	dateDayEnd    = "2019-11-30"
 	defaultsFP    = "../../config/defaults.yml"
@@ -150,6 +151,14 @@ func (suite *IntegSuite) TestfetchEmployeeOS() {
 	records, err := suite.db.fetchEmployeeOS(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(records) > 10)
+}
+
+// TestfetchMonthlyGalesLoyalty
+func (suite *IntegSuite) TestfetchMonthlyGalesLoyalty() {
+	docs, err := suite.db.fetchMonthlyGalesLoyalty(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	// suite.True(len(nf) > 0)
+	fmt.Printf("docs %+v\n", docs[0])
 }
 
 // TestGetBankCardsError method

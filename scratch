@@ -3,4 +3,14 @@ XMLHttpRequest at 'https://t71a1oad0b.execute-api.ca-central-1.amazonaws.com/Pro
 Access to XMLHttpRequest at 'https://t71a1oad0b.execute-api.ca-central-1.amazonaws.com/Prod/report' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
 
 
-TODO:
+_id:ObjectID("5e21dec03861cc000731aa07")
+createdAt:1579278016058
+productID:ObjectID("5e1f63167934140007cc6c98")
+qty:map[close:0 open:0 restock:0 sold:0]
+recordDate:1578182400000
+recordNum:2020-01-05-1
+sales:0
+sortOrder:12
+stationID:ObjectID("56cf1815982d82b0f3000000")
+updatedAt:1579278260537
+]
