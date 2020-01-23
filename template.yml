@@ -8,6 +8,15 @@ Parameters:
     Description: Username of the IAM user for this service
     Type: String
     Default: sysadmin
+  ParamCertificateArn:
+    Description: Domain Certificate Arn
+    Type: String
+  ParamCustomDomainName:
+    Description: Custom Domain Name
+    Type: String
+  ParamHostedZoneId:
+    Description: Hosted Zone ID
+    Type: String
   ParamKMSKeyID:
     Description: KMS key id
     Type: String
@@ -28,13 +37,7 @@ Resources:
     DependsOn: Lambda
     Properties:
       StageName: Prod
-      # We're adding all essential headers (I hope) in the handler files, this property is not required
-      # Cors: "'*'"
-      # Cors:
-      #   AllowMethods: "'GET,OPTIONS,POST,PUT'"
-      #   AllowHeaders: "'Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-      #   AllowOrigin: "'*'"
-      # EndpointConfiguration: REGIONAL
+      EndpointConfiguration: REGIONAL
       Auth:
         DefaultAuthorizer: LambdaTokenAuthorizer
         Authorizers:
@@ -51,24 +54,22 @@ Resources:
             "application/json": '{ "message": $context.error.messageString }'
           ResponseParameters:
             Headers:
-              # Access-Control-Expose-Headers: "'WWW-Authenticate'"
+              Access-Control-Expose-Headers: "'WWW-Authenticate'"
               Access-Control-Allow-Origin: "'*'"
               Access-Control-Allow-Headers: "'*'"
               # WWW-Authenticate: >- 
                 # 'Bearer realm="admin"'
 
       # Docs for this at: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
-      # Domain:
-      #   DomainName: String # REQUIRED | custom domain name being configured on the api, "www.example.com"
-      #   CertificateARN: String # REQUIRED | Must be a valid [certificate ARN](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html), and for EDGE endpoint configuration the certificate must be in us-east-1
-      #   EndpointConfiguration: "EDGE" # optional | Default value is REGIONAL | Accepted values are EDGE | REGIONAL
-      #   BasePath:
-      #     - String # optional | Default value is '/' | List of basepaths to be configured with the ApiGateway Domain Name 
-      #   Route53: # optional | Default behavior is to treat as None - does not create Route53 resources | Enable these settings to create Route53 Recordsets
-      #     HostedZoneId: String # REQUIRED | Must be a hostedzoneid value of a [`AWS::Route53::HostedZone`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53-hostedzone.html) resource
-      #     EvaluateTargetHealth: Boolean # optional | default value is false
-      #     DistributionDomainName: String # OPTIONAL if the EndpointConfiguration is EDGE | Default points to Api Gateway Distribution | Domain name of a [cloudfront distribution](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudfront-distribution.html) 
-
+      Domain:
+        DomainName: !Ref ParamCustomDomainName
+        CertificateArn: !Ref ParamCertificateArn
+        EndpointConfiguration: "REGIONAL"
+        Route53:
+          HostedZoneId: !Ref ParamHostedZoneId
+          EvaluateTargetHealth: true
+          DistributionDomainName:
+            Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
 
   Lambda:
     Type: AWS::Serverless::Function
@@ -77,8 +78,8 @@ Resources:
       CodeUri: ./dist
       Handler: /report
       Role: !GetAtt LambdaRole.Arn
-      Timeout: 20 # for testing only
-      MemorySize: 512
+      Timeout: 10
+      MemorySize: 1028
       Environment:
         Variables:
           Stage: prod

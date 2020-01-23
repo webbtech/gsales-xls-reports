@@ -55,9 +55,12 @@ awsdeploy:
 	--profile $(AWS_PROFILE) \
 	--force-upload \
 	--parameter-overrides \
+		ParamCertificateArn=$(CERTIFICATE_ARN) \
+		ParamCustomDomainName=$(CUSTOM_DOMAIN_NAME) \
+		ParamHostedZoneId=$(HOSTED_ZONE_ID) \
 		ParamKMSKeyID=$(KMS_KEY_ID) \
-		ParamReportBucket=${AWS_REPORT_BUCKET} \
 		ParamProjectName=$(PROJECT_NAME) \
+		ParamReportBucket=${AWS_REPORT_BUCKET} \
 		ParamThundraKey=$(THUNDRA_API_KEY)
 
 describe:
