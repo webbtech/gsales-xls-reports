@@ -22,8 +22,8 @@ const (
 	cfgHST = int32(13)
 	// dateMonth     = "2019-11"
 	dateMonth     = "2020-01"
-	dateDayStart  = "2020-11-01"
-	dateDayEnd    = "2019-11-30"
+	dateDayStart  = "2020-02-01"
+	dateDayEnd    = "2019-02-28"
 	defaultsFP    = "../../config/defaults.yml"
 	employeeIDStr = "5733c671982d828347021ed7"
 	employeeName  = "Grimstead, Kevin"
@@ -155,8 +155,19 @@ func (suite *IntegSuite) TestfetchEmployeeOS() {
 
 // TestfetchMonthlyGalesLoyalty
 func (suite *IntegSuite) TestfetchMonthlyGalesLoyalty() {
-	_, err := suite.db.fetchMonthlyGalesLoyalty(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	_, err := suite.db.fetchGalesLoyalty(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
+	// suite.True(len(nf) > 0)
+}
+
+// TestfetchGalesLoyalty
+func (suite *IntegSuite) TestfetchGalesLoyalty() {
+	fmt.Printf("suite.dateDays %+v\n", suite.dateDays)
+	docs, err := suite.db.fetchGalesLoyalty(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	fmt.Printf("docs %+v\n", docs[0])
+	// _, err := suite.db.fetchGalesLoyalty(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	// suite.NoError(err)
 	// suite.True(len(nf) > 0)
 }
 

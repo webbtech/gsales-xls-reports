@@ -64,6 +64,9 @@ func (x *XLSX) setPayPeriodValues(sheetNm string, records []*model.PayPeriodReco
 		x.displayCell(sheetNm, col, row, r.CarwashNumber)
 
 		col++
+		x.displayCell(sheetNm, col, row, r.GalesLoyaltyQty)
+
+		col++
 		x.displayCell(sheetNm, col, row, r.AttendantAdjustment)
 
 		col = 1
@@ -77,7 +80,7 @@ func (x *XLSX) setPayPeriodTotalsRow(sheetNm string) {
 	totalsRow := lastRow + 1
 	var cell, colNm, formula string
 	const firstIteratorCol = 4
-	const lastIteratorCol = 10
+	const lastIteratorCol = 11
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
@@ -89,7 +92,7 @@ func (x *XLSX) setPayPeriodTotalsRow(sheetNm string) {
 	f.SetCellStyle(sheetNm, cell, cell, boldStyle)
 
 	for c := firstIteratorCol; c <= lastIteratorCol; c++ {
-		if c == 7 || c == 10 {
+		if c == 7 || c == 10 || c == 11 {
 			style = numStyle
 		} else {
 			style = floatStyle

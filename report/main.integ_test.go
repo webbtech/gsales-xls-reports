@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	monthDate = "2019-12"
+	monthDate = "2020-02"
 	// monthDate      = "2020-01"
-	periodDateFrom = "2019-11-01"
-	periodDateTo   = "2019-11-30"
+	periodDateFrom = "2020-02-01"
+	periodDateTo   = "2020-02-28"
 	defaultsFP     = "../config/defaults.yml"
 	timeForm       = "2006-01-02"
 )

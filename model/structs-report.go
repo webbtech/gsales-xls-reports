@@ -74,6 +74,7 @@ type PayPeriodRecord struct {
 	CarwashNumber       int
 	Commission          *CommissionSale
 	Employee            string
+	GalesLoyaltyQty     int
 	NonFuelSales        float64
 	ProductSales        float64
 	RecordNumber        string

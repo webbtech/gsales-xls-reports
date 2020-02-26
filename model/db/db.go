@@ -144,16 +144,16 @@ func (db *MDB) GetEmployeeOS(dates *model.RequestDates) (records []*model.Sales,
 	return records, err
 }
 
-// GetMonthlyGalesLoyalty method
-func (db *MDB) GetMonthlyGalesLoyalty(dates *model.RequestDates) (records []*model.NonFuelSale, err error) {
-	records, err = db.fetchMonthlyGalesLoyalty(dates.DateFrom, dates.DateTo)
+// GetGalesLoyalty method
+func (db *MDB) GetGalesLoyalty(dates *model.RequestDates) (records []*model.NonFuelSale, err error) {
+	records, err = db.fetchGalesLoyalty(dates.DateFrom, dates.DateTo)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(records) == 0 {
-		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetMonthlyGalesLoyalty", Msg: noRecordsMsg}
-	}
+	/* if len(records) == 0 {
+		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetGalesLoyalty", Msg: noRecordsMsg}
+	} */
 
 	return records, err
 }
@@ -352,7 +352,7 @@ func (db *MDB) fetchEmployeeOS(startDate, endDate time.Time) (sales []*model.Sal
 	return sales, err
 }
 
-func (db *MDB) fetchMonthlyGalesLoyalty(startDate, endDate time.Time) (docs []*model.NonFuelSale, err error) {
+func (db *MDB) fetchGalesLoyalty(startDate, endDate time.Time) (docs []*model.NonFuelSale, err error) {
 
 	col := db.db.Collection(colNonFuelSales)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

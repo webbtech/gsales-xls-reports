@@ -266,6 +266,10 @@ func PayPeriodJSON() string {
 			"width": 19.00
 		},
 		{
+			"label": "Total Loyalty Transactions",
+			"width": 25.00
+		},
+		{
 			"label": "Attendant Adjustment",
 			"width": 21.00
 		}

@@ -22,11 +22,18 @@ func (pp *PayPeriod) GetRecords() ([]*model.PayPeriodRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = pp.setNonFuelCommission()
 	if err != nil {
 		return nil, err
 	}
+
 	err = pp.setCarWashes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = pp.setGalesLoyalty()
 	if err != nil {
 		return nil, err
 	}
@@ -123,4 +130,18 @@ func (pp *PayPeriod) getCarWashStations() (stations []primitive.ObjectID) {
 	stations = append(stations, station1)
 
 	return stations
+}
+
+// setGalesLoyalty method
+func (pp *PayPeriod) setGalesLoyalty() (err error) {
+	docs, err := pp.db.GetGalesLoyalty(pp.dates)
+	for _, s := range pp.records {
+		for _, p := range docs {
+			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
+				// fmt.Printf("p.Qty %+v\n", p.Qty)
+				s.GalesLoyaltyQty = p.Qty.Sold
+			}
+		}
+	}
+	return err
 }

@@ -145,7 +145,7 @@ func (ms *MonthlySales) setCarWashes() (err error) {
 
 // setGalesLoyalty method
 func (ms *MonthlySales) setGalesLoyalty() (err error) {
-	docs, err := ms.db.GetMonthlyGalesLoyalty(ms.dates)
+	docs, err := ms.db.GetGalesLoyalty(ms.dates)
 	for _, s := range ms.records {
 		for _, p := range docs {
 			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
