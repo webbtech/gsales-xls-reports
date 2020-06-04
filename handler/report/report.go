@@ -11,7 +11,8 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/report"
 	"github.com/pulpfree/gsales-xls-reports/validate"
 	log "github.com/sirupsen/logrus"
-	"github.com/thundra-io/thundra-lambda-agent-go/thundra"
+
+	// "github.com/thundra-io/thundra-lambda-agent-go/thundra"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -110,8 +111,8 @@ func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 }
 
 func main() {
-	lambda.Start(thundra.Wrap(HandleRequest))
-	// lambda.Start(HandleRequest)
+	// lambda.Start(thundra.Wrap(HandleRequest))
+	lambda.Start(HandleRequest)
 }
 
 func gatewayResponse(resp Response, hdrs map[string]string, err error) events.APIGatewayProxyResponse {

@@ -83,10 +83,10 @@ Resources:
       Environment:
         Variables:
           Stage: prod
-          thundra_apiKey: !Ref ParamThundraKey
-          thundra_agent_lambda_report_cloudwatch_enable: false
-          thundra_lambda_warmup_warmupAware: true
-          thundra_agent_lambda_warmup_warmupAware: true
+          # thundra_apiKey: !Ref ParamThundraKey
+          # thundra_agent_lambda_report_cloudwatch_enable: false
+          # thundra_lambda_warmup_warmupAware: true
+          # thundra_agent_lambda_warmup_warmupAware: true
       VpcConfig:
         # TODO: these should be extracted into params and .env file
         SecurityGroupIds:
@@ -130,12 +130,14 @@ Resources:
       Handler: /authorizer
       Runtime: go1.x
       Role: !GetAtt AuthLambdaRole.Arn
-      Environment:
-        Variables:
-          thundra_apiKey: !Ref ParamThundraKey
-          thundra_agent_lambda_report_cloudwatch_enable: false
-          thundra_lambda_warmup_warmupAware: true
-          thundra_agent_lambda_warmup_warmupAware: true
+      MemorySize: 256
+      Timeout: 10
+      # Environment:
+      #   Variables:
+      #     thundra_apiKey: !Ref ParamThundraKey
+      #     thundra_agent_lambda_report_cloudwatch_enable: false
+      #     thundra_lambda_warmup_warmupAware: true
+      #     thundra_agent_lambda_warmup_warmupAware: true
       Tags:
         BillTo: 'Gales'
 
