@@ -45,6 +45,9 @@ const (
 // slice of Gales Loyalty product ids
 var galesLoyaltyProductIDs = []string{"5e2080472dbbd30008721739", "5e1f63167934140007cc6c98"}
 
+// slice of Propane Tanks type product ids
+var propaneTankProductIDs = []string{"56cf4bfe982d82b41d000019", "56cf4bfe982d82b41d00001a"}
+
 // ======================== Exported Functions ================================================= //
 
 // NewDB sets up new MDB struct
@@ -151,10 +154,6 @@ func (db *MDB) GetGalesLoyalty(dates *model.RequestDates) (records []*model.NonF
 		return nil, err
 	}
 
-	/* if len(records) == 0 {
-		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetGalesLoyalty", Msg: noRecordsMsg}
-	} */
-
 	return records, err
 }
 
@@ -187,6 +186,16 @@ func (db *MDB) GetMonthlyProducts(dates *model.RequestDates) (records []*model.N
 	return records, err
 }
 
+// GetNonFuelSales method
+func (db *MDB) GetNonFuelSales(dates *model.RequestDates) (records []*model.NonFuelProduct, err error) {
+	records, err = db.fetchNonFuelSales(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, err
+}
+
 // GetPayPeriodSales method
 func (db *MDB) GetPayPeriodSales(dates *model.RequestDates) (records []*model.Sales, err error) {
 	records, err = db.fetchPayPeriodSales(dates.DateFrom, dates.DateTo)
@@ -210,6 +219,16 @@ func (db *MDB) GetProductNumbers(dates *model.RequestDates) (records []*model.Pr
 
 	if len(records) == 0 {
 		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetProductNumbers", Msg: noRecordsMsg}
+	}
+
+	return records, err
+}
+
+// GetPropaneSales method
+func (db *MDB) GetPropaneSales(dates *model.RequestDates) (records []*model.NonFuelProduct, err error) {
+	records, err = db.fetchPropaneProducts(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
 	}
 
 	return records, err
@@ -527,6 +546,99 @@ func (db *MDB) fetchMonthlySales(startDate, endDate time.Time) (sales []*model.S
 	return sales, err
 }
 
+func (db *MDB) fetchNonFuelSales(startDate, endDate time.Time) (docs []*model.NonFuelProduct, err error) {
+
+	col := db.db.Collection(colNonFuelSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pIDs := make([]primitive.ObjectID, len(propaneTankProductIDs))
+	for i := range propaneTankProductIDs {
+		pIDs[i], _ = primitive.ObjectIDFromHex(propaneTankProductIDs[i])
+	}
+
+	pipeline := mongo.Pipeline{
+		{
+			primitive.E{
+				Key: "$match",
+				Value: bson.D{
+					primitive.E{
+						Key:   "productID",
+						Value: bson.M{"$nin": pIDs},
+					},
+					primitive.E{
+						Key:   "sales",
+						Value: bson.M{"$gt": 0},
+					},
+					primitive.E{
+						Key: "recordDate",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$gte",
+								Value: startDate,
+							},
+							primitive.E{
+								Key:   "$lte",
+								Value: endDate,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$group",
+				Value: bson.D{
+					primitive.E{
+						Key: "_id",
+						Value: bson.D{
+							primitive.E{
+								Key:   "recordNum",
+								Value: "$recordNum",
+							},
+							primitive.E{
+								Key:   "station",
+								Value: "$stationID",
+							},
+						},
+					},
+					primitive.E{
+						Key: "sales",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$sum",
+								Value: "$sales",
+							},
+						},
+					},
+					primitive.E{
+						Key: "qty",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$sum",
+								Value: "$qty.sold",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cur, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+
+	return docs, err
+}
+
 func (db *MDB) fetchPayPeriodSales(startDate, endDate time.Time) (sales []*model.Sales, err error) {
 
 	col := db.db.Collection(colSales)
@@ -667,6 +779,99 @@ func (db *MDB) fetchProductNumbers(startDate, endDate time.Time) (products []*mo
 	}
 
 	return products, err
+}
+
+func (db *MDB) fetchPropaneProducts(startDate, endDate time.Time) (docs []*model.NonFuelProduct, err error) {
+
+	col := db.db.Collection(colNonFuelSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pIDs := make([]primitive.ObjectID, len(propaneTankProductIDs))
+	for i := range propaneTankProductIDs {
+		pIDs[i], _ = primitive.ObjectIDFromHex(propaneTankProductIDs[i])
+	}
+
+	pipeline := mongo.Pipeline{
+		{
+			primitive.E{
+				Key: "$match",
+				Value: bson.D{
+					primitive.E{
+						Key:   "productID",
+						Value: bson.M{"$in": pIDs},
+					},
+					primitive.E{
+						Key:   "sales",
+						Value: bson.M{"$gt": 0},
+					},
+					primitive.E{
+						Key: "recordDate",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$gte",
+								Value: startDate,
+							},
+							primitive.E{
+								Key:   "$lte",
+								Value: endDate,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$group",
+				Value: bson.D{
+					primitive.E{
+						Key: "_id",
+						Value: bson.D{
+							primitive.E{
+								Key:   "recordNum",
+								Value: "$recordNum",
+							},
+							primitive.E{
+								Key:   "station",
+								Value: "$stationID",
+							},
+						},
+					},
+					primitive.E{
+						Key: "sales",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$sum",
+								Value: "$sales",
+							},
+						},
+					},
+					primitive.E{
+						Key: "qty",
+						Value: bson.D{
+							primitive.E{
+								Key:   "$sum",
+								Value: "$qty.sold",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cur, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+
+	return docs, err
 }
 
 func (db *MDB) fetchCarWash(startDate, endDate time.Time) (sales []*model.NonFuelSale, err error) {

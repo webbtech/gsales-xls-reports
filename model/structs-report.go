@@ -57,11 +57,14 @@ type MonthlySaleRecord struct {
 	FuelSalesTotal         float64
 	GalesLoyalty           int
 	GiftCertificates       float64
+	NonFuelSales           float64
 	NonFuelTotal           float64
 	ProductCigarettesQty   int
 	ProductCigarettesSales float64
 	ProductOilQty          int
 	ProductOilSales        float64
+	PropaneSales           float64
+	PropaneQty             int
 	RecordNumber           string
 	ShiftOvershort         float64
 	StationID              primitive.ObjectID

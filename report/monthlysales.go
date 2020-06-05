@@ -35,6 +35,16 @@ func (ms *MonthlySales) GetRecords() ([]*model.MonthlySaleRecord, error) {
 	}
 
 	err = ms.setGalesLoyalty()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setPropaneSales()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setNonFuelSales()
 
 	return ms.records, err
 }
@@ -135,7 +145,6 @@ func (ms *MonthlySales) setCarWashes() (err error) {
 	for _, s := range ms.records {
 		for _, p := range products {
 			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
-				// fmt.Printf("p.Qty %+v\n", p.Qty)
 				s.CarWash = p.Qty.Sold
 			}
 		}
@@ -149,8 +158,40 @@ func (ms *MonthlySales) setGalesLoyalty() (err error) {
 	for _, s := range ms.records {
 		for _, p := range docs {
 			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
-				// fmt.Printf("p.Qty %+v\n", p.Qty)
 				s.GalesLoyalty = p.Qty.Sold
+			}
+		}
+	}
+	return err
+}
+
+// setNonFuelSales method
+func (ms *MonthlySales) setNonFuelSales() (err error) {
+
+	docs, err := ms.db.GetNonFuelSales(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range docs {
+			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
+				// fmt.Printf("p: %+v\n", p)
+				s.NonFuelSales = p.Sales
+				// s.PropaneSales = p.Sales
+				// s.PropaneQty = p.Qty
+			}
+		}
+	}
+
+	return err
+}
+
+// setPropaneSales method
+func (ms *MonthlySales) setPropaneSales() (err error) {
+
+	docs, err := ms.db.GetPropaneSales(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range docs {
+			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
+				s.PropaneSales = p.Sales
+				s.PropaneQty = p.Qty
 			}
 		}
 	}

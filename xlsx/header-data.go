@@ -112,6 +112,18 @@ func MonthlySalesJSON() string {
 			"width": 15.5
 		},
 		{
+			"label": "Propane Fuel Sales",
+			"width": 16.5
+		},
+		{
+			"label": "Propane Fuel Qty",
+			"width": 15.5
+		},
+		{
+			"label": "Non Fuel Sales",
+			"width": 13.5
+		},
+		{
 			"label": "Gift Certificates",
 			"width": 15.0
 		},

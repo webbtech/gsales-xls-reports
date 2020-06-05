@@ -66,6 +66,15 @@ func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleR
 		x.displayCell(sheetNm, col, row, s.FuelSalesOther)
 
 		col++
+		x.displayCell(sheetNm, col, row, s.PropaneSales)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.PropaneQty)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.NonFuelSales)
+
+		col++
 		x.displayCell(sheetNm, col, row, s.GiftCertificates)
 
 		col++
@@ -156,7 +165,7 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 	f := x.file
 	totalsRow := lastRow + 1
 	var cell, colNm, formula string
-	const lastIteratorCol = 35
+	const lastIteratorCol = 38
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
@@ -169,7 +178,7 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 	f.SetCellStyle(sheetNm, cell, cell, boldStyle)
 
 	for c := 4; c <= lastIteratorCol; c++ {
-		if c == 31 || c == 33 || c == 34 || c == 35 {
+		if c == 10 || c == 34 || c == 36 || c == 37 || c == 38 {
 			style = numStyle
 		} else {
 			style = floatStyle
