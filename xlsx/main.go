@@ -125,6 +125,18 @@ func toFixed(num float64, precision int) float64 {
 	return float64(round(num*output)) / output
 }
 
+// findNumber function
+// takes a slice and looks for an element in it
+// return bool
+func findNumber(slice []int, val int) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}
+
 /* func displayFloat(num interface{}) float64 {
 	var ret float64
 	switch v := num.(type) {

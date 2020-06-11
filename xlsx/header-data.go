@@ -120,8 +120,12 @@ func MonthlySalesJSON() string {
 			"width": 15.5
 		},
 		{
-			"label": "Non Fuel Sales",
-			"width": 13.5
+			"label": "Misc Non-Fuel Sales",
+			"width": 15.5
+		},
+		{
+			"label": "Misc Non-Fuel Qty",
+			"width": 15.5
 		},
 		{
 			"label": "Gift Certificates",

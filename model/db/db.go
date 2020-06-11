@@ -48,6 +48,8 @@ var galesLoyaltyProductIDs = []string{"5e2080472dbbd30008721739", "5e1f631679341
 // slice of Propane Tanks type product ids
 var propaneTankProductIDs = []string{"56cf4bfe982d82b41d000019", "56cf4bfe982d82b41d00001a"}
 
+var giftCertificateIDs = []string{"56cf4bfe982d82b41d00000d"}
+
 // ======================== Exported Functions ================================================= //
 
 // NewDB sets up new MDB struct
@@ -552,10 +554,15 @@ func (db *MDB) fetchNonFuelSales(startDate, endDate time.Time) (docs []*model.No
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pIDs := make([]primitive.ObjectID, len(propaneTankProductIDs))
-	for i := range propaneTankProductIDs {
-		pIDs[i], _ = primitive.ObjectIDFromHex(propaneTankProductIDs[i])
+	var productIDs []string
+	productIDs = append(propaneTankProductIDs, giftCertificateIDs...)
+
+	pIDs := make([]primitive.ObjectID, len(productIDs))
+	for i := range productIDs {
+		pIDs[i], _ = primitive.ObjectIDFromHex(productIDs[i])
 	}
+
+	removeCats := []string{"cigarettes", "N/C"}
 
 	pipeline := mongo.Pipeline{
 		{
@@ -582,6 +589,81 @@ func (db *MDB) fetchNonFuelSales(startDate, endDate time.Time) (docs []*model.No
 								Value: endDate,
 							},
 						},
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$lookup",
+				Value: bson.D{
+					primitive.E{
+						Key:   "from",
+						Value: colProducts,
+					},
+					primitive.E{
+						Key:   "localField",
+						Value: "productID",
+					},
+					primitive.E{
+						Key:   "foreignField",
+						Value: "_id",
+					},
+					primitive.E{
+						Key:   "as",
+						Value: "product",
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key:   "$unwind",
+				Value: "$product",
+			},
+		},
+		{
+			primitive.E{
+				Key: "$project",
+				Value: bson.D{
+					primitive.E{
+						Key:   "product.category",
+						Value: 1,
+					},
+					primitive.E{
+						Key:   "product.oilProduct",
+						Value: 1,
+					},
+					primitive.E{
+						Key:   "qty.sold",
+						Value: 1,
+					},
+					primitive.E{
+						Key:   "recordNum",
+						Value: 1,
+					},
+					primitive.E{
+						Key:   "stationID",
+						Value: 1,
+					},
+					primitive.E{
+						Key:   "sales",
+						Value: 1,
+					},
+				},
+			},
+		},
+		{
+			primitive.E{
+				Key: "$match",
+				Value: bson.D{
+					primitive.E{
+						Key:   "product.category",
+						Value: bson.M{"$nin": removeCats},
+					},
+					primitive.E{
+						Key:   "product.oilProduct",
+						Value: false,
 					},
 				},
 			},

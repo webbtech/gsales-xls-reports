@@ -172,10 +172,8 @@ func (ms *MonthlySales) setNonFuelSales() (err error) {
 	for _, s := range ms.records {
 		for _, p := range docs {
 			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
-				// fmt.Printf("p: %+v\n", p)
-				s.NonFuelSales = p.Sales
-				// s.PropaneSales = p.Sales
-				// s.PropaneQty = p.Qty
+				s.MiscNonFuelSales = p.Sales
+				s.MiscNonFuelQty = p.Qty
 			}
 		}
 	}

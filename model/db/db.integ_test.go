@@ -21,7 +21,7 @@ import (
 const (
 	cfgHST = int32(13)
 	// dateMonth     = "2019-11"
-	dateMonth     = "2020-01"
+	dateMonth     = "2020-04"
 	dateDayStart  = "2020-02-01"
 	dateDayEnd    = "2019-02-28"
 	defaultsFP    = "../../config/defaults.yml"

@@ -57,7 +57,8 @@ type MonthlySaleRecord struct {
 	FuelSalesTotal         float64
 	GalesLoyalty           int
 	GiftCertificates       float64
-	NonFuelSales           float64
+	MiscNonFuelSales       float64
+	MiscNonFuelQty         int
 	NonFuelTotal           float64
 	ProductCigarettesQty   int
 	ProductCigarettesSales float64
