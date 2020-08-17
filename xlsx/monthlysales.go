@@ -63,6 +63,9 @@ func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleR
 		x.displayCell(sheetNm, col, row, s.FuelSalesTotal)
 
 		col++
+		x.displayCell(sheetNm, col, row, s.FuelAdjustments) // <-- this one!!
+
+		col++
 		x.displayCell(sheetNm, col, row, s.FuelSalesOther)
 
 		col++
@@ -85,9 +88,6 @@ func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleR
 
 		col++
 		x.displayCell(sheetNm, col, row, s.BobsGiftCertificates)
-
-		col++
-		x.displayCell(sheetNm, col, row, s.BobsNonFuelAdjustments)
 
 		col++
 		x.displayCell(sheetNm, col, row, s.NonFuelTotal)
@@ -167,7 +167,7 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 
 	f := x.file
 	totalsRow := lastRow + 1
-	numericCols := []int{10, 12, 35, 37, 38, 39}
+	numericCols := []int{11, 13, 35, 37, 38, 39}
 	var cell, colNm, formula string
 	const lastIteratorCol = 39
 	var style int

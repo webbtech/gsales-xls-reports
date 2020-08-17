@@ -82,7 +82,7 @@ func (ms *MonthlySales) setRecords() (err error) {
 			BankMC:                 model.SetFloat(s.CreditCard.MC),
 			BankVisa:               model.SetFloat(s.CreditCard.Visa),
 			BobsGiftCertificates:   model.SetFloat(s.OtherNonFuelBobs.BobsGiftCerts),
-			BobsNonFuelAdjustments: model.SetFloat(s.Summary.BobsFuelAdj),
+			FuelAdjustments:        model.SetFloat(s.Summary.FuelAdjust),
 			BobsSales:              model.SetFloat(s.OtherNonFuel.Bobs),
 			CashBills:              model.SetFloat(s.Cash.Bills),
 			CashDebit:              model.SetFloat(s.Cash.Debit),

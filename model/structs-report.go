@@ -36,7 +36,7 @@ type MonthlySaleRecord struct {
 	BankMC                 float64
 	BankVisa               float64
 	BobsGiftCertificates   float64
-	BobsNonFuelAdjustments float64
+	FuelAdjustments        float64
 	BobsSales              float64
 	CarWash                int
 	CashBills              float64

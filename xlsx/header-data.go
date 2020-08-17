@@ -108,6 +108,10 @@ func MonthlySalesJSON() string {
 			"width": 14.75
 		},
 		{
+			"label": "Fuel Adjustment",
+			"width": 16.5
+		},
+		{
 			"label": "Other Fuel Sales",
 			"width": 15.5
 		},
@@ -138,10 +142,6 @@ func MonthlySalesJSON() string {
 		{
 			"label": "Bobs Gift Certs.",
 			"width": 15.0
-		},
-		{
-			"label": "Bobs Fuel Adjust.",
-			"width": 16.5
 		},
 		{
 			"label": "Total Non-Fuel",
