@@ -156,7 +156,7 @@ type SalesSummary struct {
 		Fuel5 *FuelType `bson:"fuel_5" json:"fuel_5"`
 		Fuel6 *FuelType `bson:"fuel_6" json:"fuel_6"`
 	}
-	BobsFuelAdj            *float64 `bson:"bobsFuelAdj" json:"bobsFuelAdj"`
+	BobsFuelAdj            *float64 `bson:"bobsFuelAdj" json:"bobsFuelAdj"` //TODO: rename all occurances to fuelAdjust or FuelAdjust
 	FuelDollar             float64  `bson:"fuelDollar" json:"fuelDollar"`
 	FuelLitre              float64  `bson:"fuelLitre" json:"fuelLitre"`
 	OtherFuelDollar        float64  `bson:"otherFuelDollar" json:"otherFuelDollar"`
