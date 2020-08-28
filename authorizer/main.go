@@ -24,7 +24,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/lambda-utils/tokenvalidator"
+
+	"github.com/pulpfree/tokenvalidator"
 	"github.com/thundra-io/thundra-lambda-agent-go/thundra"
 )
 
@@ -39,8 +40,6 @@ func init() {
 }
 
 func handleRequest(ctx context.Context, event events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
-	// log.Println("Client token: " + event.AuthorizationToken)
-	// log.Println("Method ARN: " + event.MethodArn)
 
 	// validate the incoming token
 	// and produce the principal user identifier associated with the token

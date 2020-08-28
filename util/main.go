@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/pkgerrors"
+	"github.com/pulpfree/pkgerrors"
 )
 
 const (
