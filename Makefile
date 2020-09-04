@@ -10,6 +10,9 @@ clean:
 	@rm -rf dist
 	@mkdir -p dist
 
+# "go.useLanguageServer": false
+# gopls -rpc.trace -v check path/to/file.go
+
 build: clean
 	@for dir in `ls handler`; do \
 		GOOS=linux go build -o dist/$$dir github.com/pulpfree/$(PROJECT_NAME)/handler/$$dir; \

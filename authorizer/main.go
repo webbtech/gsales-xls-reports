@@ -26,7 +26,6 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/config"
 
 	"github.com/pulpfree/tokenvalidator"
-	"github.com/thundra-io/thundra-lambda-agent-go/thundra"
 )
 
 var cfg *config.Config
@@ -87,7 +86,8 @@ func handleRequest(ctx context.Context, event events.APIGatewayCustomAuthorizerR
 }
 
 func main() {
-	lambda.Start(thundra.Wrap(handleRequest))
+	// lambda.Start(thundra.Wrap(handleRequest))
+	lambda.Start(handleRequest)
 }
 
 // HTTPVerb type
