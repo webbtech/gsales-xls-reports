@@ -36,7 +36,7 @@ type MonthlySaleRecord struct {
 	BankMC                 float64
 	BankVisa               float64
 	BobsGiftCertificates   float64
-	BobsNonFuelAdjustments float64
+	FuelAdjustments        float64
 	BobsSales              float64
 	CarWash                int
 	CashBills              float64
@@ -57,11 +57,15 @@ type MonthlySaleRecord struct {
 	FuelSalesTotal         float64
 	GalesLoyalty           int
 	GiftCertificates       float64
+	MiscNonFuelSales       float64
+	MiscNonFuelQty         int
 	NonFuelTotal           float64
 	ProductCigarettesQty   int
 	ProductCigarettesSales float64
 	ProductOilQty          int
 	ProductOilSales        float64
+	PropaneSales           float64
+	PropaneQty             int
 	RecordNumber           string
 	ShiftOvershort         float64
 	StationID              primitive.ObjectID

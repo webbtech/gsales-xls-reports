@@ -16,6 +16,8 @@ type DBHandler interface {
 	GetNonFuelCommission(string, primitive.ObjectID) (*CommissionSale, error)
 	GetPayPeriodSales(*RequestDates) ([]*Sales, error)
 	GetProductNumbers(*RequestDates) ([]*ProductNumberRecord, error)
+	GetPropaneSales(*RequestDates) ([]*NonFuelProduct, error)
+	GetNonFuelSales(*RequestDates) ([]*NonFuelProduct, error)
 	GetStationMap() (map[primitive.ObjectID]*Station, error)
 }
 

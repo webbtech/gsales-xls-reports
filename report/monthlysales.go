@@ -35,6 +35,16 @@ func (ms *MonthlySales) GetRecords() ([]*model.MonthlySaleRecord, error) {
 	}
 
 	err = ms.setGalesLoyalty()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setPropaneSales()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ms.setNonFuelSales()
 
 	return ms.records, err
 }
@@ -72,7 +82,7 @@ func (ms *MonthlySales) setRecords() (err error) {
 			BankMC:                 model.SetFloat(s.CreditCard.MC),
 			BankVisa:               model.SetFloat(s.CreditCard.Visa),
 			BobsGiftCertificates:   model.SetFloat(s.OtherNonFuelBobs.BobsGiftCerts),
-			BobsNonFuelAdjustments: model.SetFloat(s.Summary.BobsFuelAdj),
+			FuelAdjustments:        model.SetFloat(s.Summary.FuelAdjust),
 			BobsSales:              model.SetFloat(s.OtherNonFuel.Bobs),
 			CashBills:              model.SetFloat(s.Cash.Bills),
 			CashDebit:              model.SetFloat(s.Cash.Debit),
@@ -135,7 +145,6 @@ func (ms *MonthlySales) setCarWashes() (err error) {
 	for _, s := range ms.records {
 		for _, p := range products {
 			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
-				// fmt.Printf("p.Qty %+v\n", p.Qty)
 				s.CarWash = p.Qty.Sold
 			}
 		}
@@ -149,8 +158,38 @@ func (ms *MonthlySales) setGalesLoyalty() (err error) {
 	for _, s := range ms.records {
 		for _, p := range docs {
 			if s.StationID == p.StationID && s.RecordNumber == p.RecordNum {
-				// fmt.Printf("p.Qty %+v\n", p.Qty)
 				s.GalesLoyalty = p.Qty.Sold
+			}
+		}
+	}
+	return err
+}
+
+// setNonFuelSales method
+func (ms *MonthlySales) setNonFuelSales() (err error) {
+
+	docs, err := ms.db.GetNonFuelSales(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range docs {
+			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
+				s.MiscNonFuelSales = p.Sales
+				s.MiscNonFuelQty = p.Qty
+			}
+		}
+	}
+
+	return err
+}
+
+// setPropaneSales method
+func (ms *MonthlySales) setPropaneSales() (err error) {
+
+	docs, err := ms.db.GetPropaneSales(ms.dates)
+	for _, s := range ms.records {
+		for _, p := range docs {
+			if s.StationID == p.ID.Station && s.RecordNumber == p.ID.RecordNum {
+				s.PropaneSales = p.Sales
+				s.PropaneQty = p.Qty
 			}
 		}
 	}

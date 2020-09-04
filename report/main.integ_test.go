@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	monthDate = "2020-02"
+	monthDate = "2020-04"
 	// monthDate      = "2020-01"
-	periodDateFrom = "2020-02-01"
-	periodDateTo   = "2020-02-28"
+	periodDateFrom = "2020-04-01"
+	periodDateTo   = "2020-04-30"
 	defaultsFP     = "../config/defaults.yml"
 	timeForm       = "2006-01-02"
 )
@@ -165,6 +165,7 @@ func (s *IntegSuite) TestMonthlyGetRecords() {
 	}
 
 	msRecs, err := ms.GetRecords()
+	// fmt.Printf("record: %+v", msRecs[0])
 	s.NoError(err)
 	s.True(len(msRecs) > 10)
 }

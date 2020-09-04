@@ -12,16 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	pkgerrors "github.com/pulpfree/go-errors"
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/pkgerrors"
 	"github.com/pulpfree/gsales-xls-reports/util"
 )
 
 const (
 	cfgHST = int32(13)
 	// dateMonth     = "2019-11"
-	dateMonth     = "2020-01"
+	dateMonth     = "2020-04"
 	dateDayStart  = "2020-02-01"
 	dateDayEnd    = "2019-02-28"
 	defaultsFP    = "../../config/defaults.yml"
@@ -122,9 +122,23 @@ func (suite *IntegSuite) TestGetMonthlyProducts() {
 	suite.True(len(sales) > 0)
 }
 
+// TestGetNonFuelSales
+func (suite *IntegSuite) TestGetNonFuelSales() {
+	sales, err := suite.db.GetNonFuelSales(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
 // TestGetPayPeriodSales
 func (suite *IntegSuite) TestGetPayPeriodSales() {
 	sales, err := suite.db.GetPayPeriodSales(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
+// TestGetPropaneSales
+func (suite *IntegSuite) TestGetPropaneSales() {
+	sales, err := suite.db.GetPropaneSales(suite.dateMonth)
 	suite.NoError(err)
 	suite.True(len(sales) > 0)
 }
@@ -213,6 +227,13 @@ func (suite *IntegSuite) TestfetchMonthlySales() {
 	suite.True(len(sales) > 0)
 }
 
+// TestfetchNonFuelSales method
+func (suite *IntegSuite) TestfetchNonFuelSales() {
+	docs, err := suite.db.fetchNonFuelSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(docs) > 0)
+}
+
 // TestfetchPayPeriodSales method
 func (suite *IntegSuite) TestfetchPayPeriodSales() {
 	records, err := suite.db.fetchPayPeriodSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
@@ -243,6 +264,14 @@ func (suite *IntegSuite) TestfetchNonFuelCommission() {
 		_, err := suite.db.fetchNonFuelCommission(r.RecordNum, r.StationID)
 		suite.NoError(err)
 	}
+}
+
+// TestfetchPropaneProducts method
+func (suite *IntegSuite) TestfetchPropaneProducts() {
+	// fmt.Printf("suite.dateDays %+v\n", suite.dateDays)
+	docs, err := suite.db.fetchPropaneProducts(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(docs) > 0)
 }
 
 // ===================== Utility Functions ===================================================== //

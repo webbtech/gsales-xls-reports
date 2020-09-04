@@ -63,7 +63,22 @@ func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleR
 		x.displayCell(sheetNm, col, row, s.FuelSalesTotal)
 
 		col++
+		x.displayCell(sheetNm, col, row, s.FuelAdjustments) // <-- this one!!
+
+		col++
 		x.displayCell(sheetNm, col, row, s.FuelSalesOther)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.PropaneSales)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.PropaneQty)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.MiscNonFuelSales)
+
+		col++
+		x.displayCell(sheetNm, col, row, s.MiscNonFuelQty)
 
 		col++
 		x.displayCell(sheetNm, col, row, s.GiftCertificates)
@@ -73,9 +88,6 @@ func (x *XLSX) setMonthlySalesValues(sheetNm string, sales []*model.MonthlySaleR
 
 		col++
 		x.displayCell(sheetNm, col, row, s.BobsGiftCertificates)
-
-		col++
-		x.displayCell(sheetNm, col, row, s.BobsNonFuelAdjustments)
 
 		col++
 		x.displayCell(sheetNm, col, row, s.NonFuelTotal)
@@ -155,8 +167,9 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 
 	f := x.file
 	totalsRow := lastRow + 1
+	numericCols := []int{11, 13, 35, 37, 38, 39}
 	var cell, colNm, formula string
-	const lastIteratorCol = 35
+	const lastIteratorCol = 39
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
@@ -169,7 +182,7 @@ func (x *XLSX) setMonthlySalesTotalsRow(sheetNm string) {
 	f.SetCellStyle(sheetNm, cell, cell, boldStyle)
 
 	for c := 4; c <= lastIteratorCol; c++ {
-		if c == 31 || c == 33 || c == 34 || c == 35 {
+		if findNumber(numericCols, c) == true {
 			style = numStyle
 		} else {
 			style = floatStyle
