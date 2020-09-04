@@ -97,14 +97,6 @@ Resources:
       Tags:
         BillTo: 'Gales'
       Events:
-        Report:
-          Type: Api
-          Properties:
-            Path: /report
-            Method: POST
-            RestApiId: !Ref RestApi
-            Auth:
-              Authorizer: LambdaTokenAuthorizer
         Ping:
           Type: Api
           Properties:
@@ -113,6 +105,14 @@ Resources:
             RestApiId: !Ref RestApi
             Auth:
               Authorizer: NONE
+        Report:
+          Type: Api
+          Properties:
+            Path: /report
+            Method: POST
+            RestApiId: !Ref RestApi
+            Auth:
+              Authorizer: LambdaTokenAuthorizer
         Options:
           Type: Api
           Properties:
