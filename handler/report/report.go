@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	pres "github.com/pulpfree/lambda-go-proxy-response"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -13,8 +14,6 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/model"
 	"github.com/pulpfree/gsales-xls-reports/report"
 	"github.com/pulpfree/gsales-xls-reports/validate"
-
-	"github.com/pulpfree/pres"
 )
 
 // SignedURL struct
