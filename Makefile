@@ -64,7 +64,8 @@ awsdeploy:
 		ParamKMSKeyID=$(KMS_KEY_ID) \
 		ParamProjectName=$(PROJECT_NAME) \
 		ParamReportBucket=${AWS_REPORT_BUCKET} \
-		ParamThundraKey=$(THUNDRA_API_KEY)
+		ParamSecurityGroupIds=$(SECURITY_GROUP_IDS) \
+		ParamSubnetIds=$(SUBNET_IDS)
 
 describe:
 	@aws cloudformation describe-stacks \

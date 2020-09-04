@@ -10,10 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	pkgerrors "github.com/pulpfree/go-errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/pkgerrors"
 )
 
 // MDB struct
@@ -72,7 +72,7 @@ func NewDB(connection string, dbNm string) (*MDB, error) {
 		log.Fatal(err)
 	}
 
-	log.Println("Connected to MongoDB!")
+	log.Infoln("Connected to MongoDB!")
 
 	return &MDB{
 		client: client,
@@ -89,7 +89,7 @@ func (db *MDB) Close() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connection to MongoDB closed.")
+	log.Infoln("Connection to MongoDB closed.")
 }
 
 // GetBankCards method

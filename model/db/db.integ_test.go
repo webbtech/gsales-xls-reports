@@ -12,10 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	pkgerrors "github.com/pulpfree/go-errors"
 	"github.com/pulpfree/gsales-xls-reports/config"
 	"github.com/pulpfree/gsales-xls-reports/model"
 	"github.com/pulpfree/gsales-xls-reports/util"
-	"github.com/pulpfree/pkgerrors"
 )
 
 const (

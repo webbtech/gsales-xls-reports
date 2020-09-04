@@ -19,6 +19,6 @@ vendor/
 .env
 dist/
 docs/*
-tmp
-scratch
 package.yml
+scratch
+tmp
