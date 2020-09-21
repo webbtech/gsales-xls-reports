@@ -373,6 +373,7 @@ func (db *MDB) fetchEmployeeOS(startDate, endDate time.Time) (sales []*model.Sal
 	return sales, err
 }
 
+// fetchGalesLoyalty method
 func (db *MDB) fetchGalesLoyalty(startDate, endDate time.Time) (docs []*model.NonFuelSale, err error) {
 
 	col := db.db.Collection(colNonFuelSales)

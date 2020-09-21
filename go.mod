@@ -5,8 +5,9 @@ go 1.15
 require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.0
 	github.com/aws/aws-lambda-go v1.19.1
-	github.com/aws/aws-sdk-go v1.34.17
+	github.com/aws/aws-sdk-go v1.34.27
 	github.com/google/go-cmp v0.5.2 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pulpfree/go-errors v1.0.1
 	github.com/pulpfree/lambda-go-auth v0.1.1
 	github.com/pulpfree/lambda-go-proxy-response v1.0.1
