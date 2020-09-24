@@ -28,6 +28,17 @@ type EmployeeOSRecord struct {
 	StationName            string
 }
 
+// FuelSalesRecord struct
+type FuelSalesRecord struct {
+	StationName string
+	Fuel1       FuelType
+	Fuel2       FuelType
+	Fuel3       FuelType
+	Fuel4       FuelType
+	Fuel5       FuelType
+	Fuel6       FuelType
+}
+
 // MonthlySaleRecord struct
 type MonthlySaleRecord struct {
 	BankAmex               float64
