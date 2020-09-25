@@ -27,7 +27,7 @@ func (x *XLSX) FuelSales(records []model.FuelSalesRecord) (err error) {
 	x.setFSHeader(sheetNm)
 
 	x.setFuelSalesValues(sheetNm, records)
-	x.setFuelSalesTotals(sheetNm)
+	x.setFuelSalesTotals(sheetNm, records)
 	x.setFuelSalesStationTotals(sheetNm, records)
 	f.SetSheetName(sheetNm, "Fuel Sales")
 	err = f.SetDocProps(&excelize.DocProperties{
@@ -50,7 +50,7 @@ func (x *XLSX) setFSHeader(sheetNm string) {
 	style, _ := f.NewStyle(`{"font":{"bold":true}}`)
 
 	firstCell, _ := excelize.CoordinatesToCellName(1, rowNo)
-	lastCell, _ := excelize.CoordinatesToCellName(13, rowNo)
+	lastCell, _ := excelize.CoordinatesToCellName(11, rowNo)
 	f.SetCellValue(sheetNm, firstCell, "Station")
 	colNm, _ := excelize.ColumnNumberToName(1)
 	f.SetColWidth(sheetNm, colNm, colNm, colWidth)
@@ -65,14 +65,12 @@ func (x *XLSX) setFSHeader(sheetNm string) {
 	_ = f.MergeCell(sheetNm, "H1", "I1")
 	f.SetCellValue(sheetNm, "H1", "CDSL")
 	_ = f.MergeCell(sheetNm, "J1", "K1")
-	f.SetCellValue(sheetNm, "J1", "Propane")
-	_ = f.MergeCell(sheetNm, "L1", "M1")
-	f.SetCellValue(sheetNm, "L1", "Station Totals")
+	f.SetCellValue(sheetNm, "J1", "Station Totals")
 	f.SetColWidth(sheetNm, "B", "M", 12)
 
 	rowNo++
 	col := 2
-	for i := 1; i <= 6; i++ {
+	for i := 1; i <= 5; i++ {
 		cell, _ = excelize.CoordinatesToCellName(col, rowNo)
 		f.SetCellValue(sheetNm, cell, "Litres")
 		col++
@@ -88,12 +86,8 @@ func (x *XLSX) setFuelSalesValues(sheetNm string, records []model.FuelSalesRecor
 	col := 1
 	row := 3
 
-	firstRow = row
-	lastRow = len(records) + 1
-
 	for _, r := range records {
-		fmt.Printf("r.StationName: %+v\n", r.StationName)
-		fmt.Printf("row: %+v\n", row)
+
 		x.displayCell(sheetNm, col, row, r.StationName)
 
 		col++
@@ -120,24 +114,20 @@ func (x *XLSX) setFuelSalesValues(sheetNm string, records []model.FuelSalesRecor
 		col++
 		x.displayCell(sheetNm, col, row, r.Fuel5.Dollar)
 
-		col++
-		x.displayCell(sheetNm, col, row, r.Fuel6.Litre)
-
-		col++
-		x.displayCell(sheetNm, col, row, r.Fuel6.Dollar)
-
 		col = 1
 		row++
 	}
 }
 
-func (x *XLSX) setFuelSalesTotals(sheetNm string) {
+func (x *XLSX) setFuelSalesTotals(sheetNm string, records []model.FuelSalesRecord) {
 
 	f := x.file
-	totalsRow := lastRow + 2
+	totalsRow := len(records) + 3
+	startRow := 3
+	endRow := totalsRow - 1
 	var cell, colNm, formula string
 	const firstIteratorCol = 2
-	const lastIteratorCol = 13
+	const lastIteratorCol = 11
 	var style int
 
 	boldStyle, _ := f.NewStyle(`{"font":{"bold":true}}`)
@@ -153,7 +143,7 @@ func (x *XLSX) setFuelSalesTotals(sheetNm string) {
 
 		colNm, _ = excelize.ColumnNumberToName(c)
 		cell, _ = excelize.CoordinatesToCellName(c, totalsRow)
-		formula = fmt.Sprintf("SUM(%s%d:%s%d)", colNm, firstRow, colNm, lastRow)
+		formula = fmt.Sprintf("SUM(%s%d:%s%d)", colNm, startRow, colNm, endRow)
 		f.SetCellFormula(sheetNm, cell, formula)
 		f.SetCellStyle(sheetNm, cell, cell, style)
 	}
@@ -169,9 +159,9 @@ func (x *XLSX) setFuelSalesStationTotals(sheetNm string, records []model.FuelSal
 	startCol := 2
 	startRow := 3
 	curRow := startRow
-	numRows := len(records) - 1 // Not clear why this is necessary, wee have 14 stations but len(records) shows 15???
-	numFuels := 5
-	totalStartCol := 12
+	numRows := len(records)
+	numFuels := 4
+	totalStartCol := 10
 
 	floatStyle, _ := f.NewStyle(`{"custom_number_format": "0.00; [red]0.00"}`)
 

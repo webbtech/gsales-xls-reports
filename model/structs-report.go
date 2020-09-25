@@ -36,7 +36,6 @@ type FuelSalesRecord struct {
 	Fuel3       FuelType
 	Fuel4       FuelType
 	Fuel5       FuelType
-	Fuel6       FuelType
 }
 
 // MonthlySaleRecord struct

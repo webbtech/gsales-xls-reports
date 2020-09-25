@@ -7,9 +7,9 @@ import (
 // TestcreateFormula_Success
 func TestCreateCellsFormula_Success(t *testing.T) {
 
-	expectedStr := "B2+D2+F2+H2+J2"
+	expectedStr := "B2+D2+F2+H2"
 	startCol := 2
-	numCols := 5
+	numCols := 4
 	row := 2
 	frm := createCellsFormula(startCol, numCols, row)
 

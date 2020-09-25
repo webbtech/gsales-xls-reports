@@ -46,7 +46,6 @@ func (rep *FuelSales) setRecords() (err error) {
 			Fuel3:       fs[3],
 			Fuel4:       fs[4],
 			Fuel5:       fs[5],
-			Fuel6:       fs[6],
 		}
 		rep.records = append(rep.records, record)
 	}
@@ -64,7 +63,6 @@ func setFuels(fuelsInput []model.Fuel) (fuels map[int]model.FuelType, err error)
 	fuels[3] = model.FuelType{}
 	fuels[4] = model.FuelType{}
 	fuels[5] = model.FuelType{}
-	fuels[6] = model.FuelType{}
 
 	for _, f := range fuelsInput {
 		fuels[f.Grade] = model.FuelType{
