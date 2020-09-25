@@ -30,10 +30,12 @@ type MDB struct {
 const (
 	colConfig       = "config"
 	colEmployees    = "employees"
+	colFuelSales    = "fuel-sales"
 	colNonFuelSales = "non-fuel-sales"
 	colProducts     = "products"
 	colSales        = "sales"
 	colStations     = "stations"
+	colStationNodes = "station-nodes"
 )
 
 // misc constants
@@ -144,6 +146,16 @@ func (db *MDB) GetEmployeeOS(dates *model.RequestDates) (records []*model.Sales,
 
 	if len(records) == 0 {
 		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetEmployeeOS", Msg: noRecordsMsg}
+	}
+
+	return records, err
+}
+
+// GetFuelSales method
+func (db *MDB) GetFuelSales(dates *model.RequestDates) (records []model.FuelSales, err error) {
+	records, err = db.fetchFuelSales(dates.DateFrom, dates.DateTo)
+	if err != nil {
+		return nil, err
 	}
 
 	return records, err
@@ -373,6 +385,130 @@ func (db *MDB) fetchEmployeeOS(startDate, endDate time.Time) (sales []*model.Sal
 	return sales, err
 }
 
+// fetchFuelSales method
+// I've stopped using pointers where I don't feel necessary, hence the inconsistency here with
+// the FuelSales slice in return values
+func (db *MDB) fetchFuelSales(startDate, endDate time.Time) (docs []model.FuelSales, err error) {
+
+	// start with the station nodes
+	sets, err := db.fetchStationNodes()
+	if err != nil {
+		return nil, err
+	}
+
+	col := db.db.Collection(colFuelSales)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+
+	for _, set := range sets {
+		pipeline := mongo.Pipeline{
+			{
+				primitive.E{
+					Key: "$match",
+					Value: bson.D{
+						primitive.E{
+							Key: "stationID",
+							Value: bson.D{
+								primitive.E{
+									Key:   "$in",
+									Value: set.Nodes,
+								},
+							},
+						},
+						primitive.E{
+							Key: "recordDate",
+							Value: bson.D{
+								primitive.E{
+									Key:   "$gte",
+									Value: startDate,
+								},
+								primitive.E{
+									Key:   "$lte",
+									Value: endDate,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				primitive.E{
+					Key: "$group",
+					Value: bson.D{
+						primitive.E{
+							Key: "_id",
+							Value: bson.D{
+								primitive.E{
+									Key:   "gradeID",
+									Value: "$gradeID",
+								},
+							},
+						},
+						primitive.E{
+							Key: "dollars",
+							Value: bson.D{
+								primitive.E{
+									Key:   "$sum",
+									Value: "$dollars.net",
+								},
+							},
+						},
+						primitive.E{
+							Key: "litres",
+							Value: bson.D{
+								primitive.E{
+									Key:   "$sum",
+									Value: "$litres.net",
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				primitive.E{
+					Key: "$project",
+					Value: bson.D{
+						primitive.E{
+							Key:   "grade",
+							Value: "$_id.gradeID",
+						},
+						primitive.E{
+							Key:   "dollars",
+							Value: "$dollars",
+						},
+						primitive.E{
+							Key:   "litres",
+							Value: "$litres",
+						},
+					},
+				},
+			},
+		}
+
+		cur, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return nil, err
+		}
+		defer cur.Close(ctx)
+
+		var dcs []model.Fuel
+		if err := cur.All(ctx, &dcs); err != nil {
+			return nil, err
+		}
+
+		fs := model.FuelSales{
+			Fuels:        dcs,
+			StationName:  set.Name,
+			StationSetID: set.ID,
+		}
+		docs = append(docs, fs)
+	}
+
+	return docs, err
+}
+
+// fetchGalesLoyalty method
 func (db *MDB) fetchGalesLoyalty(startDate, endDate time.Time) (docs []*model.NonFuelSale, err error) {
 
 	col := db.db.Collection(colNonFuelSales)
@@ -1126,4 +1262,27 @@ func (db *MDB) fetchNonFuelCommission(recordNum string, stationID primitive.Obje
 	}
 
 	return com, nil
+}
+
+func (db *MDB) fetchStationNodes() (nodes []model.StationNodes, err error) {
+
+	col := db.db.Collection(colStationNodes)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// let's sort by name
+	options := options.Find()
+	options.SetSort(bson.D{primitive.E{Key: "name", Value: 1}})
+
+	cur, err := col.Find(ctx, bson.D{}, options)
+	if err != nil {
+		return nodes, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.All(ctx, &nodes); err != nil {
+		return nodes, err
+	}
+
+	return nodes, err
 }

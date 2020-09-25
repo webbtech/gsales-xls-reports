@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	monthDate = "2020-04"
+	monthDate = "2020-08"
 	// monthDate      = "2020-01"
 	periodDateFrom = "2020-04-01"
 	periodDateTo   = "2020-04-30"
@@ -24,6 +24,7 @@ const (
 	monthlyReport        = "monthlysales"
 	bankCardReport       = "bankcards"
 	employeeOSReport     = "employeeos"
+	fuelSalesReport      = "fuelsales"
 	payPeriodReport      = "payperiod"
 	productNumbersReport = "productnumbers"
 )
@@ -33,6 +34,7 @@ type IntegSuite struct {
 	report                  *Report
 	bankCardReportReq       *model.ReportRequest
 	employeeOSReportReq     *model.ReportRequest
+	fuelSalesReportReq      *model.ReportRequest
 	monthReportReq          *model.ReportRequest
 	payPeriodReportReq      *model.ReportRequest
 	productNumbersReportReq *model.ReportRequest
@@ -62,6 +64,12 @@ func (s *IntegSuite) SetupTest() {
 		ReportType: employeeOSReport,
 	}
 	s.employeeOSReportReq, _ = validate.SetRequest(employeeOSInput)
+
+	fuelSalesInput := &model.RequestInput{
+		Date:       monthDate,
+		ReportType: fuelSalesReport,
+	}
+	s.fuelSalesReportReq, _ = validate.SetRequest(fuelSalesInput)
 
 	monthReportInput := &model.RequestInput{
 		Date:       monthDate,
@@ -103,6 +111,21 @@ func (s *IntegSuite) TestsetFileName() {
 
 	expectedFileNm = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", periodDateFrom, periodDateTo)
 	s.Equal(fileNm, expectedFileNm)
+}
+
+// TestFuelSalesGetRecords method
+func (s *IntegSuite) TestFuelSalesGetRecords() {
+	var err error
+
+	s.report, err = New(s.fuelSalesReportReq, cfg)
+	s.NoError(err)
+	rep := &FuelSales{
+		dates: s.report.dates,
+		db:    s.report.db,
+	}
+	fsRecs, err := rep.GetRecords()
+	s.NoError(err)
+	s.True(len(fsRecs) > 10)
 }
 
 // TestShiftTypeGetRecords method
@@ -165,7 +188,6 @@ func (s *IntegSuite) TestMonthlyGetRecords() {
 	}
 
 	msRecs, err := ms.GetRecords()
-	// fmt.Printf("record: %+v", msRecs[0])
 	s.NoError(err)
 	s.True(len(msRecs) > 10)
 }
@@ -173,11 +195,16 @@ func (s *IntegSuite) TestMonthlyGetRecords() {
 // Testcreate method
 func (s *IntegSuite) Testcreate() {
 	var err error
+
 	s.report, err = New(s.bankCardReportReq, cfg)
 	err = s.report.create()
 	s.NoError(err)
 
 	s.report, err = New(s.employeeOSReportReq, cfg)
+	err = s.report.create()
+	s.NoError(err)
+
+	s.report, err = New(s.fuelSalesReportReq, cfg)
 	err = s.report.create()
 	s.NoError(err)
 
@@ -191,6 +218,16 @@ func (s *IntegSuite) Testcreate() {
 
 	s.report, err = New(s.productNumbersReportReq, cfg)
 	err = s.report.create()
+	s.NoError(err)
+}
+
+// TestSaveFuelSalesToDisk method
+func (s *IntegSuite) TestSaveFuelSalesToDisk() {
+	var err error
+
+	s.report, err = New(s.fuelSalesReportReq, cfg)
+	s.NoError(err)
+	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
 }
 

@@ -86,7 +86,7 @@ Resources:
       CodeUri: ./dist
       Handler: /report
       Role: !GetAtt LambdaRole.Arn
-      Timeout: 10
+      Timeout: 20
       MemorySize: 1028
       Environment:
         Variables:
@@ -129,6 +129,7 @@ Resources:
       Handler: /authorizer
       Runtime: go1.x
       Role: !GetAtt AuthLambdaRole.Arn
+      Timeout: 20
       MemorySize: 256
       Tags:
         BillTo: 'Gales'

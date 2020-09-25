@@ -8,6 +8,7 @@ import (
 	"github.com/pulpfree/gsales-xls-reports/model"
 )
 
+// FIXME: these vars are global to all reports... whew need to fix that
 var firstRow int
 var lastRow int
 

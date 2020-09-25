@@ -16,17 +16,6 @@ type Attendant struct {
 	Name              string             `bson:"name" json:"name"`
 }
 
-// CarWashProduct struct
-/* type CarWashProduct struct {
-	Qty struct {
-		Open  int `bson:"open"`
-		Sold  int `bson:"sold"`
-		Close int `bson:"close"`
-	} `bson:"qty"`
-	RecordNum string             `bson:"recordNum"`
-	StationID primitive.ObjectID `bson:"stationID"`
-} */
-
 // Cash struct
 type Cash struct {
 	Bills              *float64 `bson:"bills" json:"bills"`
@@ -73,6 +62,20 @@ type Employee struct {
 	Active    bool               `bson:"active" json:"active"`
 	NameFirst string             `bson:"nameFirst" json:"nameFirst"`
 	NameLast  string             `bson:"nameLast" json:"nameLast"`
+}
+
+// FuelSales struct
+type FuelSales struct {
+	StationName  string             `bson:"stationName" json:"stationName"`
+	StationSetID primitive.ObjectID `bson:"stationSetID" json:"stationSetID"`
+	Fuels        []Fuel
+}
+
+// Fuel struct
+type Fuel struct {
+	Dollar float64 `bson:"dollars" json:"dollars"`
+	Grade  int     `bson:"grade" json:"grade"`
+	Litre  float64 `bson:"litres" json:"litres"`
 }
 
 // FuelType struct
@@ -173,4 +176,11 @@ type SalesSummary struct {
 type Station struct {
 	ID   primitive.ObjectID `bson:"_id"`
 	Name string             `bson:"name"`
+}
+
+// StationNodes struct
+type StationNodes struct {
+	ID    primitive.ObjectID   `bson:"_id"`
+	Name  string               `bson:"name"`
+	Nodes []primitive.ObjectID `bson:"nodes"`
 }
