@@ -10,6 +10,7 @@ type DBHandler interface {
 	GetConfig() (*Config, error)
 	GetEmployee(primitive.ObjectID) (string, error)
 	GetEmployeeOS(*RequestDates) ([]*Sales, error)
+	GetFuelSales(*RequestDates) ([]FuelSales, error)
 	GetGalesLoyalty(*RequestDates) ([]*NonFuelSale, error)
 	GetMonthlyProducts(*RequestDates) ([]*NonFuelProduct, error)
 	GetMonthlySales(*RequestDates) ([]*Sales, error)

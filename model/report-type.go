@@ -11,6 +11,7 @@ type ReportType int
 const (
 	BankCardsReport ReportType = iota + 1
 	EmployeeOSReport
+	FuelSalesReport
 	MonthlySalesReport
 	PayPeriodReport
 	ProductNumbersReport
@@ -25,6 +26,8 @@ func ReportStringToType(rType string) (ReportType, error) {
 		rt = BankCardsReport
 	case "employeeos":
 		rt = EmployeeOSReport
+	case "fuelsales":
+		rt = FuelSalesReport
 	case "monthlysales":
 		rt = MonthlySalesReport
 	case "payperiod":

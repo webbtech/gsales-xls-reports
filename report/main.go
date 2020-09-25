@@ -1,6 +1,7 @@
 package report
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
@@ -82,7 +83,10 @@ func (r *Report) SaveToDisk(dir string) (fp string, err error) {
 // create method
 func (r *Report) create() (err error) {
 
-	r.setFileName()
+	err = r.setFileName()
+	if err != nil {
+		return err
+	}
 
 	rt := *r.reportType
 	switch rt {
@@ -90,12 +94,17 @@ func (r *Report) create() (err error) {
 		return r.createBankCardsReport()
 	case model.EmployeeOSReport:
 		return r.createEmployeeOSReport()
+	case model.FuelSalesReport:
+		return r.createFuelSalesReport()
 	case model.MonthlySalesReport:
 		return r.createMonthlySales()
 	case model.PayPeriodReport:
 		return r.createPayPeriod()
 	case model.ProductNumbersReport:
 		return r.createProductNumbers()
+	default:
+		errStr := fmt.Sprintf("Invalid report type: %v", rt)
+		err = errors.New(errStr)
 	}
 
 	return err
@@ -128,6 +137,22 @@ func (r *Report) createEmployeeOSReport() (err error) {
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.EmployeeOS(records)
+
+	return err
+}
+
+func (r *Report) createFuelSalesReport() (err error) {
+
+	rep := &FuelSales{
+		dates: r.dates,
+		db:    r.db,
+	}
+
+	records, err := rep.GetRecords()
+	defer r.db.Close()
+
+	r.file, err = xlsx.NewFile()
+	err = r.file.FuelSales(records)
 
 	return err
 }
@@ -186,20 +211,26 @@ func (r *Report) createProductNumbers() (err error) {
 
 // ===================== Helper Methods ======================================================== //
 
-func (r *Report) setFileName() {
+func (r *Report) setFileName() (err error) {
 	rt := *r.reportType
 	switch rt {
 	case model.BankCardsReport:
 		r.filename = fmt.Sprintf("BankCardsReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
 	case model.EmployeeOSReport:
 		r.filename = fmt.Sprintf("EmployeeOSReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
+	case model.FuelSalesReport:
+		r.filename = fmt.Sprintf("FuelSalesReport_%s.xlsx", r.dates.DateFrom.Format(timeFormatShort))
 	case model.MonthlySalesReport:
 		r.filename = fmt.Sprintf("MonthlySalesReport_%s.xlsx", r.dates.DateFrom.Format(timeFormatShort))
 	case model.PayPeriodReport:
 		r.filename = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
 	case model.ProductNumbersReport:
 		r.filename = fmt.Sprintf("ProductNumbersReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))
+	default:
+		errStr := fmt.Sprintf("Missing or invalid report type %v in setFileName method", rt)
+		err = errors.New(errStr)
 	}
+	return err
 }
 
 func (r *Report) getFileName() string {

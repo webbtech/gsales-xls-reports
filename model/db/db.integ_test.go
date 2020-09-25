@@ -21,7 +21,7 @@ import (
 const (
 	cfgHST = int32(13)
 	// dateMonth     = "2019-11"
-	dateMonth     = "2020-04"
+	dateMonth     = "2020-07"
 	dateDayStart  = "2020-02-01"
 	dateDayEnd    = "2019-02-28"
 	defaultsFP    = "../../config/defaults.yml"
@@ -97,6 +97,13 @@ func (suite *IntegSuite) TestGetStationMap() {
 // TestGetEmployeeOS
 func (suite *IntegSuite) TestGetEmployeeOS() {
 	sales, err := suite.db.GetEmployeeOS(suite.dateMonth)
+	suite.NoError(err)
+	suite.True(len(sales) > 0)
+}
+
+// TestGetFuelSales
+func (suite *IntegSuite) TestGetFuelSales() {
+	sales, err := suite.db.GetFuelSales(suite.dateMonth)
 	suite.NoError(err)
 	suite.True(len(sales) > 0)
 }
@@ -212,12 +219,18 @@ func (suite *IntegSuite) TestGetBankCardsError() {
 	}
 }
 
+// TestfetchFuelSales method
+func (suite *IntegSuite) TestfetchFuelSales() {
+	docs, err := suite.db.fetchFuelSales(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
+	suite.NoError(err)
+	suite.True(len(docs) > 0)
+}
+
 // TestfetchMonthlyNonFuel method
 func (suite *IntegSuite) TestfetchMonthlyNonFuel() {
 	nf, err := suite.db.fetchMonthlyNonFuel(suite.dateMonth.DateFrom, suite.dateMonth.DateTo)
 	suite.NoError(err)
 	suite.True(len(nf) > 0)
-	// fmt.Printf("nf %+v\n", nf[0])
 }
 
 // TestfetchMonthlySales method
@@ -298,9 +311,12 @@ func (suite *IntegSuite) TestsetStationMap() {
 	suite.NoError(err)
 }
 
-// func (suite *IntegSuite) TestInitPayPeriod() {
-// pp, err :=
-// }
+// TestfetchStationNodes method
+func (suite *IntegSuite) TestfetchStationNodes() {
+	nodes, err := suite.db.fetchStationNodes()
+	suite.NoError(err)
+	suite.True(len(nodes) > 10)
+}
 
 // TestIntegrationSuite function
 func TestIntegrationSuite(t *testing.T) {
