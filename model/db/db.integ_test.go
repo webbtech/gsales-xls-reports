@@ -22,8 +22,8 @@ const (
 	cfgHST = int32(13)
 	// dateMonth     = "2019-11"
 	dateMonth     = "2020-07"
-	dateDayStart  = "2020-02-01"
-	dateDayEnd    = "2019-02-28"
+	dateDayStart  = "2022-02-18"
+	dateDayEnd    = "2022-02-19"
 	defaultsFP    = "../../config/defaults.yml"
 	employeeIDStr = "5733c671982d828347021ed7"
 	employeeName  = "Grimstead, Kevin"

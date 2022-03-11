@@ -14,8 +14,8 @@ import (
 const (
 	monthDate = "2020-08"
 	// monthDate      = "2020-01"
-	periodDateFrom = "2020-04-01"
-	periodDateTo   = "2020-04-30"
+	periodDateFrom = "2022-02-18"
+	periodDateTo   = "2022-02-19"
 	defaultsFP     = "../config/defaults.yml"
 	timeForm       = "2006-01-02"
 )
