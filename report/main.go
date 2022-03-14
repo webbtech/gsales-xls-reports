@@ -187,6 +187,9 @@ func (r *Report) createPayPeriod() (err error) {
 	}
 	records, err := pp.GetRecords()
 	defer pp.db.Close()
+	if err != nil {
+		return err
+	}
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.PayPeriod(records)
