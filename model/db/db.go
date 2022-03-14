@@ -250,13 +250,10 @@ func (db *MDB) GetPropaneSales(dates *model.RequestDates) (records []*model.NonF
 
 // GetCarWash method
 func (db *MDB) GetCarWash(dates *model.RequestDates) (records []*model.NonFuelSale, err error) {
+
 	records, err = db.fetchCarWash(dates.DateFrom, dates.DateTo)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(records) == 0 {
-		return nil, &pkgerrors.MongoError{Err: "", Caller: "db.GetCarWash", Msg: noRecordsMsg}
 	}
 
 	return records, err

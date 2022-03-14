@@ -92,10 +92,12 @@ func (pp *PayPeriod) setNonFuelCommission() (err error) {
 
 // setCarWashes method
 func (pp *PayPeriod) setCarWashes() (err error) {
+
 	washes, err := pp.db.GetCarWash(pp.dates)
 	if err != nil {
 		return err
 	}
+
 	for _, s := range pp.records {
 		if pp.testStation(s.StationID) {
 			s.CarwashNumber = pp.searchCarWashSale(washes, s)
