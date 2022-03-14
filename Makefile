@@ -40,6 +40,9 @@ run: build
 validate:
 	sam validate
 
+test:
+	@go test -v ./...
+
 awspackage:
 	@aws cloudformation package \
    --template-file ${FILE_TEMPLATE} \
