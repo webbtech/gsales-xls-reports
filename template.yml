@@ -129,7 +129,7 @@ Resources:
       Handler: /authorizer
       Runtime: go1.x
       Role: !GetAtt AuthLambdaRole.Arn
-      Timeout: 20
+      Timeout: 10
       MemorySize: 256
       Tags:
         BillTo: 'Gales'
