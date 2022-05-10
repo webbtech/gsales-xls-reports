@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	monthDate = "2022-02"
+	monthDate = "2022-03"
 	// monthDate      = "2020-01"
 	periodDateFrom = "2022-02-19"
 	periodDateTo   = "2022-03-05"
