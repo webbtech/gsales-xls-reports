@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/pulpfree/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/config"
 )
 
 // S3Service struct
@@ -25,7 +25,7 @@ func NewS3(cfg *config.Config) (service *S3Service, err error) {
 	}
 
 	service.session, err = session.NewSession(&aws.Config{
-		Region: aws.String(cfg.AWSRegion),
+		Region: aws.String(cfg.AwsRegion),
 	})
 	if err != nil {
 		return nil, err

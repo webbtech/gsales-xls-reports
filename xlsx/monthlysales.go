@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	excelize "github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model"
+	excelize "github.com/xuri/excelize/v2"
 )
 
 // FIXME: these vars are global to all reports... whew need to fix that

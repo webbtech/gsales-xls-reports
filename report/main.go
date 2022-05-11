@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/pulpfree/gsales-xls-reports/awsservices"
-	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/model/db"
-	"github.com/pulpfree/gsales-xls-reports/xlsx"
+	"github.com/webbtech/gsales-xls-reports/awsservices"
+	"github.com/webbtech/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model/db"
+	"github.com/webbtech/gsales-xls-reports/xlsx"
 )
 
 // Report struct
@@ -30,7 +30,7 @@ const (
 
 // New function
 func New(req *model.ReportRequest, cfg *config.Config) (report *Report, err error) {
-	db, err := db.NewDB(cfg.GetMongoConnectURL(), cfg.DBName)
+	db, err := db.NewDB(cfg.GetMongoConnectURL(), cfg.DbName)
 	if err != nil {
 		return nil, err
 	}

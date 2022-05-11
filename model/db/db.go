@@ -13,7 +13,7 @@ import (
 	pkgerrors "github.com/pulpfree/go-errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model"
 )
 
 // MDB struct

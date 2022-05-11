@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	pkgerrors "github.com/pulpfree/go-errors"
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model"
 	"gotest.tools/assert"
 )
 

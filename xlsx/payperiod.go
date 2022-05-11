@@ -3,8 +3,8 @@ package xlsx
 import (
 	"fmt"
 
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/xuri/excelize/v2"
 )
 
 // PayPeriod method

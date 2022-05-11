@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/model"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -49,8 +49,8 @@ type IntegSuite struct {
 func (s *IntegSuite) SetupTest() {
 	// setup config
 	os.Setenv("Stage", "test")
-	cfg := &config.Config{DefaultsFilePath: defaultsFP}
-	err := cfg.Load()
+	cfg := &config.Config{IsDefaultsLocal: true}
+	err := cfg.Init()
 	s.NoError(err)
 
 	s.file, err = NewFile()

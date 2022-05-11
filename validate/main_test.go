@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pulpfree/gsales-xls-reports/model"
 	"github.com/stretchr/testify/suite"
+	"github.com/webbtech/gsales-xls-reports/model"
 )
 
 const (

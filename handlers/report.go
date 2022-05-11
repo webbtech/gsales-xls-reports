@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -10,10 +10,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
-	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/report"
-	"github.com/pulpfree/gsales-xls-reports/validate"
+	"github.com/webbtech/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/report"
+	"github.com/webbtech/gsales-xls-reports/validate"
 )
 
 // SignedURL struct
@@ -25,7 +25,7 @@ var cfg *config.Config
 
 func init() {
 	cfg = &config.Config{}
-	err := cfg.Load()
+	err := cfg.Init()
 	if err != nil {
 		log.Fatal(err)
 	}

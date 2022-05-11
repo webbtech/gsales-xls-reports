@@ -1,7 +1,7 @@
 package report
 
 import (
-	"github.com/pulpfree/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

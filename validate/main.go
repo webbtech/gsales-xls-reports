@@ -1,8 +1,8 @@
 package validate
 
 import (
-	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/util"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/util"
 )
 
 // SetRequest function

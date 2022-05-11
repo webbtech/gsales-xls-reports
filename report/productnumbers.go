@@ -1,6 +1,6 @@
 package report
 
-import "github.com/pulpfree/gsales-xls-reports/model"
+import "github.com/webbtech/gsales-xls-reports/model"
 
 // ProductNumbers struct
 type ProductNumbers struct {

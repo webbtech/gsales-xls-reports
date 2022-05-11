@@ -45,7 +45,8 @@ Resources:
     DependsOn: Lambda
     Properties:
       StageName: Prod
-      EndpointConfiguration: REGIONAL
+      EndpointConfiguration: 
+        Type: REGIONAL
       Auth:
         DefaultAuthorizer: LambdaTokenAuthorizer
         Authorizers:
@@ -83,8 +84,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: go1.x
-      CodeUri: ./dist
-      Handler: /report
+      CodeUri: ./
+      Handler: report
       Role: !GetAtt LambdaRole.Arn
       Timeout: 20
       MemorySize: 1028
@@ -100,7 +101,7 @@ Resources:
         Ping:
           Type: Api
           Properties:
-            Path: /report
+            Path: /
             Method: GET
             RestApiId: !Ref RestApi
             Auth:
@@ -112,7 +113,8 @@ Resources:
             Method: POST
             RestApiId: !Ref RestApi
             Auth:
-              Authorizer: LambdaTokenAuthorizer
+              # Authorizer: LambdaTokenAuthorizer
+              Authorizer: NONE
         Options:
           Type: Api
           Properties:
@@ -122,17 +124,17 @@ Resources:
             Auth:
               Authorizer: NONE
 
-  AuthLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ./dist
-      Handler: /authorizer
-      Runtime: go1.x
-      Role: !GetAtt AuthLambdaRole.Arn
-      Timeout: 10
-      MemorySize: 256
-      Tags:
-        BillTo: 'Gales'
+  # AuthLambda:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: ./authorizer
+  #     Handler: authorizer
+  #     Runtime: go1.x
+  #     Role: !GetAtt AuthLambdaRole.Arn
+  #     Timeout: 10
+  #     MemorySize: 256
+  #     Tags:
+  #       BillTo: 'Gales'
 
   LambdaRole:
     Type: AWS::IAM::Role

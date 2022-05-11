@@ -1,9 +1,9 @@
-AWSRegion: "ca-central-1"
+AwsRegion: "ca-central-1"
 CognitoClientID: ""
-DBHost: 192.168.86.137
-DBName: "gales-sales"
-DBPassword: ""
-DBUser: ""
+DbHost: 192.168.86.137
+DbName: "gales-sales"
+DbPassword: ""
+DbUser: ""
 S3Bucket: "gsales-reports"
 S3FilePrefix: "reports"
 SsmPath: "gsales-xls-reports"

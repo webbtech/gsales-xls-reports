@@ -6,6 +6,14 @@ AWS_STACK_NAME ?= $(PROJECT_NAME)
 
 deploy: build awspackage awsdeploy
 
+upload-defaults:
+	@ aws s3 cp ./config/xls-reports-defaults.yml s3://$(AWS_LAMBDA_BUCKET)/public/
+	@ aws s3api put-object-tagging \
+  --bucket $(AWS_LAMBDA_BUCKET) \
+  --key public/xls-reports-defaults.yml \
+  --tagging '{"TagSet": [{"Key": "public", "Value": "true"}]}' && \
+	echo "defaults file uploaded and tagged"
+
 clean:
 	@rm -rf dist
 	@mkdir -p dist

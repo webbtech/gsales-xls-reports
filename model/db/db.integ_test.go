@@ -13,9 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	pkgerrors "github.com/pulpfree/go-errors"
-	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/util"
+	"github.com/webbtech/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/util"
 )
 
 const (
@@ -44,8 +44,8 @@ type IntegSuite struct {
 func (suite *IntegSuite) SetupTest() {
 	// setup config
 	os.Setenv("Stage", "test")
-	suite.cfg = &config.Config{DefaultsFilePath: defaultsFP}
-	err := suite.cfg.Load()
+	suite.cfg = &config.Config{IsDefaultsLocal: true}
+	err := suite.cfg.Init()
 	suite.NoError(err)
 
 	// Set client options
@@ -57,8 +57,8 @@ func (suite *IntegSuite) SetupTest() {
 
 	suite.db = &MDB{
 		client: client,
-		dbName: suite.cfg.DBName,
-		db:     client.Database(suite.cfg.DBName),
+		dbName: suite.cfg.DbName,
+		db:     client.Database(suite.cfg.DbName),
 	}
 
 	inputMonth := &model.RequestInput{
@@ -76,7 +76,7 @@ func (suite *IntegSuite) SetupTest() {
 
 // TestNewDB method
 func (suite *IntegSuite) TestNewDB() {
-	_, err := NewDB(suite.cfg.GetMongoConnectURL(), suite.cfg.DBName)
+	_, err := NewDB(suite.cfg.GetMongoConnectURL(), suite.cfg.DbName)
 	suite.NoError(err)
 }
 

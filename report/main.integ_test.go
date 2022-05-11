@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pulpfree/gsales-xls-reports/config"
-	"github.com/pulpfree/gsales-xls-reports/model"
-	"github.com/pulpfree/gsales-xls-reports/validate"
 	"github.com/stretchr/testify/suite"
+	"github.com/webbtech/gsales-xls-reports/config"
+	"github.com/webbtech/gsales-xls-reports/model"
+	"github.com/webbtech/gsales-xls-reports/validate"
 )
 
 const (
@@ -47,8 +47,8 @@ var cfg *config.Config
 func (s *IntegSuite) SetupTest() {
 	// init config
 	os.Setenv("Stage", "test")
-	cfg = &config.Config{DefaultsFilePath: defaultsFP}
-	err := cfg.Load()
+	cfg = &config.Config{IsDefaultsLocal: true}
+	err := cfg.Init()
 	s.NoError(err)
 
 	bankCardReportInput := &model.RequestInput{

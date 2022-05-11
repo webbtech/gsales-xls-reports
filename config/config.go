@@ -1,8 +1,11 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"reflect"
@@ -17,7 +20,8 @@ import (
 // Config struct
 type Config struct {
 	config
-	DefaultsFilePath string
+	IsDefaultsLocal bool
+	// DefaultsFilePath string
 }
 
 // StageEnvironment string
@@ -31,33 +35,41 @@ const (
 	ProdEnv  StageEnvironment = "prod"
 )
 
-const defaultFileName = "defaults.yml"
-
-var (
-	defs = &defaults{}
+const (
+	defaultsFileName   = "xls-reports-defaults.yml"
+	defaultsRemotePath = "https://gsales-lambdas.s3.ca-central-1.amazonaws.com/public/xls-reports-defaults.yml"
 )
 
-// Load method
-func (c *Config) Load() (err error) {
+var (
+	defs             = &defaults{}
+	defaultsFilePath string
+)
 
-	err = c.setDefaults()
-	if err != nil {
+// ========================== Public Methods =============================== //
+
+// Init method
+func (c *Config) Init() (err error) {
+
+	if err = c.setDefaults(); err != nil {
 		return err
 	}
-	err = c.setEnvVars()
-	if err != nil {
+
+	// I want the environment vars to be the final say, but we need them for the SSM Params
+	// hence calling it twice
+	if err = c.setEnvVars(); err != nil {
 		return err
 	}
-	err = c.setSSMParams()
-	if err != nil {
+	if err = c.setSSMParams(); err != nil {
 		return err
 	}
-	err = c.setFinal()
-	if err != nil {
+
+	if err = c.setEnvVars(); err != nil {
 		return err
 	}
 
 	c.setDBConnectURL()
+	c.setFinal()
+
 	return err
 }
 
@@ -66,62 +78,92 @@ func (c *Config) GetStageEnv() StageEnvironment {
 	return c.Stage
 }
 
+// SetStageEnv method
+func (c *Config) SetStageEnv(env string) (err error) {
+	defs.Stage = env
+	return c.validateStage()
+}
+
 // GetMongoConnectURL method
 func (c *Config) GetMongoConnectURL() string {
-	return c.DBConnectURL
+	return c.DbConnectURL
 }
+
+// GetDbName method
+func (c *Config) GetDbName() string {
+	return c.config.DbName
+}
+
+// ========================== Private Methods =============================== //
 
 // this must be called first in c.Load
 func (c *Config) setDefaults() (err error) {
 
-	if c.DefaultsFilePath == "" {
-		dir, _ := os.Getwd()
-		c.DefaultsFilePath = path.Join(dir, defaultFileName)
-	}
+	var file []byte
+	if c.IsDefaultsLocal == true { // DefaultsRemote is explicitly set to true
 
-	file, err := ioutil.ReadFile(c.DefaultsFilePath)
-	if err != nil {
-		return err
+		dir, _ := os.Getwd()
+		defaultsFilePath = path.Join(dir, defaultsFileName)
+		if _, err = os.Stat(defaultsFilePath); os.IsNotExist(err) {
+			return err
+		}
+
+		file, err = ioutil.ReadFile(defaultsFilePath)
+		if err != nil {
+			return err
+		}
+
+	} else { // using remote file path
+		res, err := http.Get(defaultsRemotePath)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+
+		file, err = io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = yaml.Unmarshal([]byte(file), &defs)
 	if err != nil {
 		return err
 	}
-	err = c.validateStage()
+
+	if err = c.validateStage(); err != nil {
+		return err
+	}
 
 	return err
 }
 
 // validateStage method validates requested Stage exists
-func (c *Config) validateStage() error {
+func (c *Config) validateStage() (err error) {
 
-	validEnv := false
+	validEnv := true
 
 	switch defs.Stage {
 	case "dev":
+	case "development":
 		c.Stage = DevEnv
-		validEnv = true
 	case "stage":
 		c.Stage = StageEnv
-		validEnv = true
 	case "test":
 		c.Stage = TestEnv
-		validEnv = true
 	case "prod":
 		c.Stage = ProdEnv
-		validEnv = true
 	case "production":
 		c.Stage = ProdEnv
-		validEnv = true
+	default:
+		validEnv = false
 	}
 
 	if !validEnv {
-		// return errors.New(fmt.Sprintf("Invalid Stage type: %s", c.Stage))
-		return fmt.Errorf("Invalid Stage type: %s", defs.Stage)
+		return errors.New("Invalid StageEnvironment requested")
 	}
 
-	return nil
+	return err
 }
 
 // sets any environment variables that match the default struct fields
@@ -151,7 +193,7 @@ func (c *Config) setSSMParams() (err error) {
 	paramPath := aws.String(strings.Join(s, "/"))
 
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(defs.AWSRegion),
+		Region: aws.String(defs.AwsRegion),
 	})
 	if err != nil {
 		return err
@@ -167,8 +209,7 @@ func (c *Config) setSSMParams() (err error) {
 	}
 
 	paramLen := len(res.Parameters)
-	if paramLen == 0 {
-		// err = fmt.Errorf("Error fetching ssm params, total number found: %d", paramLen)
+	if paramLen == 0 { // if no parameters returned then no sense in continueing
 		return nil
 	}
 
@@ -189,27 +230,23 @@ func (c *Config) setDBConnectURL() *Config {
 
 	var userPass, authSource string
 
-	if defs.DBUser != "" && defs.DBPassword != "" {
-		userPass = defs.DBUser + ":" + defs.DBPassword + "@"
+	if defs.DbUser != "" && defs.DbPassword != "" {
+		userPass = fmt.Sprintf("%s:%s@", defs.DbUser, defs.DbPassword)
 	}
 
 	if userPass != "" {
 		authSource = "?authSource=admin"
 	}
 
-	c.DBConnectURL = "mongodb://" + userPass + defs.DBHost + "/" + authSource
+	c.DbConnectURL = fmt.Sprintf("mongodb://%s%s/%s", userPass, defs.DbHost, authSource)
 
 	return c
 }
 
 // Copies required fields from the defaults to the config struct
-func (c *Config) setFinal() (err error) {
-
-	c.AWSRegion = defs.AWSRegion
+func (c *Config) setFinal() {
+	c.AwsRegion = defs.AwsRegion
 	c.CognitoClientID = defs.CognitoClientID
+	c.DbName = defs.DbName
 	c.S3Bucket = defs.S3Bucket
-	c.DBName = defs.DBName
-	err = c.validateStage()
-
-	return err
 }
