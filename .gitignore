@@ -15,7 +15,7 @@
 
 # Dependency directories (remove the comment below to include it)
 .aws-sam/
-.env
+.env*
 .vscode/
 dist/
 docs/*
@@ -23,3 +23,5 @@ package.yml
 scratch*
 tmp
 vendor/
+scripts/login_first.sh
+scripts/fetch_token.sh

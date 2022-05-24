@@ -2,17 +2,6 @@
 
 Golang service to manage various xls report file downloads
 
-## Initialize
+## Version 2 Updates
 
-``` bash
-go mod init github.com/pulpfree/gsales-xls-reports
-```
-
-## Dependencies
-
-``` bash
-go get go.mongodb.org/mongo-driver/bson
-go get go.mongodb.org/mongo-driver/bson/primitive
-go get go.mongodb.org/mongo-driver/mongo
-go get go.mongodb.org/mongo-driver/mongo/options
-```
+- decided to remove the `mongodb.Close()` method. We're not at risk of having too many open connections

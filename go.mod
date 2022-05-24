@@ -5,15 +5,14 @@ go 1.18
 require (
 	github.com/aws/aws-lambda-go v1.31.1
 	github.com/aws/aws-sdk-go v1.44.11
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pulpfree/go-errors v1.0.1
 	github.com/pulpfree/lambda-go-auth v0.1.1
-	github.com/pulpfree/lambda-go-proxy-response v1.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/xuri/excelize/v2 v2.6.0
 	go.mongodb.org/mongo-driver v1.9.1
 	gopkg.in/yaml.v2 v2.4.0
-	gotest.tools v2.2.0+incompatible
 )
 
 require (
@@ -34,7 +33,6 @@ require (
 	github.com/lestrrat-go/jwx v1.2.24 // indirect
 	github.com/lestrrat-go/option v1.0.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect

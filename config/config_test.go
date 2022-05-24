@@ -44,6 +44,7 @@ func TestValidateStage(t *testing.T) {
 
 	t.Run("stage set from environment", func(t *testing.T) {
 		os.Setenv("Stage", "test")
+		defer os.Unsetenv("Stage")
 		cfg.setEnvVars() // calls validateStage
 		if cfg.Stage != TestEnv {
 			t.Fatalf("Stage value should be: %s, have: %s", TestEnv, cfg.Stage)
@@ -52,6 +53,7 @@ func TestValidateStage(t *testing.T) {
 
 	t.Run("stage set from invalid environment variable", func(t *testing.T) {
 		os.Setenv("Stage", "testit")
+		defer os.Unsetenv("Stage")
 		err := cfg.setEnvVars()
 		if err == nil {
 			t.Fatalf("Expected validateStage to return error")

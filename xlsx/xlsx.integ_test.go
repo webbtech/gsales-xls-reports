@@ -36,7 +36,7 @@ const (
 // IntegSuite struct
 type IntegSuite struct {
 	cfg  *config.Config
-	db   model.DBHandler
+	db   model.DbHandler
 	file *XLSX
 	// bankCardReport *report.BankCard
 	// employeeOS    *bankcards.Records

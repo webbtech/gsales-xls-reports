@@ -7,7 +7,7 @@ import (
 
 // PayPeriod struct
 type PayPeriod struct {
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []*model.PayPeriodRecord
 }

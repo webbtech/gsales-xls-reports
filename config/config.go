@@ -160,7 +160,7 @@ func (c *Config) validateStage() (err error) {
 	}
 
 	if !validEnv {
-		return errors.New("Invalid StageEnvironment requested")
+		return errors.New(fmt.Sprintf("Invalid StageEnvironment requested: %s", defs.Stage))
 	}
 
 	return err

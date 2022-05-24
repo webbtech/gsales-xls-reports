@@ -2,100 +2,198 @@ package handlers
 
 import (
 	"encoding/json"
-	"time"
-
-	pres "github.com/pulpfree/lambda-go-proxy-response"
-	log "github.com/sirupsen/logrus"
+	"errors"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/opentracing/opentracing-go/log"
 
 	"github.com/webbtech/gsales-xls-reports/config"
+	lerrors "github.com/webbtech/gsales-xls-reports/errors"
 	"github.com/webbtech/gsales-xls-reports/model"
 	"github.com/webbtech/gsales-xls-reports/report"
-	"github.com/webbtech/gsales-xls-reports/validate"
+	"github.com/webbtech/gsales-xls-reports/utils"
 )
 
-// SignedURL struct
-type SignedURL struct {
-	URL string `json:"url"`
+type Report struct {
+	Cfg           *config.Config
+	Db            model.DbHandler
+	input         *model.RequestInput
+	reportRequest *model.ReportRequest
+	request       events.APIGatewayProxyRequest
+	response      events.APIGatewayProxyResponse
 }
 
-var cfg *config.Config
+const (
+	CODE_SUCCESS                = "SUCCESS"
+	ERR_INVALID_DATES           = "Invalid date parameters"
+	ERR_INVALID_TYPE            = "Invalid report type in input"
+	ERR_MISSING_REQUEST_BODY    = "Missing request body"
+	ERR_FAILED_TO_CREATE_REPORT = "Failed to create report"
+)
 
-func init() {
-	cfg = &config.Config{}
-	err := cfg.Init()
-	if err != nil {
-		log.Fatal(err)
-	}
+const (
+	timeDayFormat   = "2006-01-02"
+	timeMonthFormat = "2006-01"
+)
+
+var stage string
+
+// ========================== Public Methods =============================== //
+
+func (r *Report) Response(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	r.request = request
+	r.process()
+	return r.response, nil
 }
 
-// HandleRequest function
-func HandleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// ========================== Private Methods ============================== //
 
-	// see following link for tips
-	// https://stackoverflow.com/questions/53298478/has-been-blocked-by-cors-policy-response-to-preflight-request-doesn-t-pass-acce
+func (r *Report) process() {
 
-	hdrs := make(map[string]string)
-	hdrs["Content-Type"] = "application/json"
-	hdrs["Access-Control-Allow-Origin"] = "*"
-	hdrs["Access-Control-Allow-Methods"] = "GET,OPTIONS,POST,PUT"
-	hdrs["Access-Control-Allow-Headers"] = "Authorization,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" // just added
-
-	if req.HTTPMethod == "OPTIONS" {
-		return events.APIGatewayProxyResponse{Body: string("null"), Headers: hdrs, StatusCode: 200}, nil
-	}
-
-	t := time.Now()
-
-	// If this is a ping test, intercept and return
-	if req.HTTPMethod == "GET" {
-		log.Info("Ping test in handleRequest")
-		return pres.ProxyRes(pres.Response{
-			Code:      200,
-			Data:      "pong",
-			Status:    "success",
-			Timestamp: t.Unix(),
-		}, hdrs, nil), nil
-	}
-
-	var r *model.RequestInput
-	json.Unmarshal([]byte(req.Body), &r)
+	rb := responseBody{}
+	var body []byte
+	var err error
+	var rpt *report.Report
+	var statusCode int = 201
+	var stdError *lerrors.StdError
+	var url string
 
 	// validate input
-	reportRequest, err := validate.SetRequest(r)
-	if err != nil {
-		return pres.ProxyRes(pres.Response{
-			Timestamp: t.Unix(),
-		}, hdrs, err), nil
+	if err := r.validateInput(); err != nil {
+		errors.As(err, &stdError)
 	}
 
-	rpt, err := report.New(reportRequest, cfg)
-	if err != nil {
-		return pres.ProxyRes(pres.Response{
-			Timestamp: t.Unix(),
-		}, hdrs, err), nil
+	// create report
+	if stdError == nil {
+		rpt, err = report.New(r.reportRequest, r.Cfg, r.Db)
+		if err != nil {
+			stdError = &lerrors.StdError{
+				Caller:     "handlers.process",
+				Code:       lerrors.CodeApplicationError,
+				Err:        err,
+				Msg:        ERR_FAILED_TO_CREATE_REPORT,
+				StatusCode: 500,
+			}
+		}
 	}
 
-	url, err := rpt.CreateSignedURL()
-	if err != nil {
-		return pres.ProxyRes(pres.Response{
-			Timestamp: t.Unix(),
-		}, hdrs, err), nil
+	// create signed url
+	if stdError == nil {
+		url, err = rpt.CreateSignedURL()
+		if err != nil {
+			stdError = &lerrors.StdError{
+				Caller:     "handlers.process",
+				Code:       lerrors.CodeApplicationError,
+				Err:        err,
+				Msg:        ERR_FAILED_TO_CREATE_REPORT,
+				StatusCode: 500,
+			}
+		}
 	}
 
-	urlStr := url[0:100]
-	log.Infof("signed url created %s", urlStr)
+	// Process any errors
+	if stdError != nil {
+		rb.Code = stdError.Code
+		rb.Message = stdError.Msg
+		statusCode = stdError.StatusCode
+		logError(stdError)
+	} else {
+		rb.Code = CODE_SUCCESS
+		rb.Message = "Success"
+		rb.Data = url
+	}
 
-	return pres.ProxyRes(pres.Response{
-		Code:      201,
-		Data:      SignedURL{URL: url},
-		Status:    "success",
-		Timestamp: t.Unix(),
-	}, hdrs, nil), nil
+	// Create the response object
+	body, _ = json.Marshal(&rb)
+	r.response = events.APIGatewayProxyResponse{
+		Body:       string(body),
+		Headers:    headers,
+		StatusCode: statusCode,
+	}
 }
 
-func main() {
-	lambda.Start(HandleRequest)
+func (r *Report) validateInput() (err *lerrors.StdError) {
+
+	r.reportRequest = &model.ReportRequest{}
+
+	json.Unmarshal([]byte(r.request.Body), &r.input)
+
+	// ensure there's a request body
+	if r.input == nil {
+		return &lerrors.StdError{
+			Caller:     "handlers.validateInput",
+			Code:       lerrors.CodeBadInput,
+			Err:        errors.New(ERR_MISSING_REQUEST_BODY),
+			Msg:        ERR_MISSING_REQUEST_BODY,
+			StatusCode: 400,
+		}
+	}
+
+	// validate and create report type
+	rt, error := model.ReportStringToType(r.input.ReportType)
+	if error != nil {
+		return &lerrors.StdError{
+			Caller:     "handlers.validateInput",
+			Code:       lerrors.CodeBadInput,
+			Err:        errors.New(ERR_INVALID_TYPE),
+			Msg:        ERR_INVALID_TYPE,
+			StatusCode: 400,
+		}
+	}
+	r.reportRequest.ReportType = rt
+
+	// validate and create dates
+	dts, error := r.createDates()
+	if error != nil {
+		return &lerrors.StdError{
+			Caller:     "handlers.validateInput",
+			Code:       lerrors.CodeBadInput,
+			Err:        errors.New(ERR_INVALID_DATES),
+			Msg:        ERR_INVALID_DATES,
+			StatusCode: 400,
+		}
+	}
+	r.reportRequest.Dates = dts
+
+	return nil
+}
+
+// createDates function
+func (r *Report) createDates() (dates *model.RequestDates, err error) {
+
+	input := r.input
+	dates = &model.RequestDates{}
+
+	if input.Date == "" && (input.DateFrom == "" || input.DateTo == "") {
+		return nil, errors.New("Missing dates in handler.CreateDates")
+	}
+
+	// if it's a date, then we create a date range for the month requested
+	if input.Date != "" {
+		dates.DateFrom, dates.DateTo, err = utils.DatesFromMonth(input.Date)
+		if err != nil {
+			return dates, err
+		}
+
+		// else we should have a start and end date
+	} else {
+		dates.DateFrom, dates.DateTo, err = utils.DatesFromDays(input.DateFrom, input.DateTo)
+		if err != nil {
+			return dates, err
+		}
+	}
+
+	return dates, nil
+}
+
+// NOTE: these could go into it's own package
+func logError(err *lerrors.StdError) {
+	if stage == "" {
+		stage = os.Getenv("Stage")
+	}
+
+	if stage != "test" {
+		log.Error(err)
+	}
 }

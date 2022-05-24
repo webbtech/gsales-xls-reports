@@ -2,21 +2,22 @@ package report
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/webbtech/gsales-xls-reports/config"
 	"github.com/webbtech/gsales-xls-reports/model"
-	"github.com/webbtech/gsales-xls-reports/validate"
+	"github.com/webbtech/gsales-xls-reports/mongodb"
+	"github.com/webbtech/gsales-xls-reports/utils"
 )
 
 const (
-	monthDate = "2022-03"
-	// monthDate      = "2020-01"
+	monthDate      = "2022-03"
 	periodDateFrom = "2022-02-19"
 	periodDateTo   = "2022-03-05"
-	defaultsFP     = "../config/defaults.yml"
 	timeForm       = "2006-01-02"
 )
 
@@ -41,83 +42,108 @@ type IntegSuite struct {
 	suite.Suite
 }
 
-var cfg *config.Config
+var (
+	cfg              *config.Config
+	db               *mongodb.MDB
+	startDte, endDte time.Time
+	tp               model.ReportType
+)
 
 // SetupTest method
 func (s *IntegSuite) SetupTest() {
 	// init config
 	os.Setenv("Stage", "test")
-	cfg = &config.Config{IsDefaultsLocal: true}
+	cfg = &config.Config{}
 	err := cfg.Init()
 	s.NoError(err)
 
-	bankCardReportInput := &model.RequestInput{
-		DateFrom:   periodDateFrom,
-		DateTo:     periodDateTo,
-		ReportType: bankCardReport,
+	// Set db
+	db, err = mongodb.NewDB(cfg.GetMongoConnectURL(), cfg.DbName)
+	if err != nil {
+		log.Fatalf("Failed to initial db with error: %s", err)
 	}
-	s.bankCardReportReq, _ = validate.SetRequest(bankCardReportInput)
 
-	employeeOSInput := &model.RequestInput{
-		DateFrom:   periodDateFrom,
-		DateTo:     periodDateTo,
-		ReportType: employeeOSReport,
+	// create shared dates struct
+	startDte, endDte, _ = utils.DatesFromDays(periodDateFrom, periodDateTo)
+	dayDates := &model.RequestDates{
+		DateFrom: startDte,
+		DateTo:   endDte,
 	}
-	s.employeeOSReportReq, _ = validate.SetRequest(employeeOSInput)
 
-	fuelSalesInput := &model.RequestInput{
-		Date:       monthDate,
-		ReportType: fuelSalesReport,
+	startDte, endDte, _ = utils.DatesFromMonth(monthDate)
+	monthDates := &model.RequestDates{
+		DateFrom: startDte,
+		DateTo:   endDte,
 	}
-	s.fuelSalesReportReq, _ = validate.SetRequest(fuelSalesInput)
 
-	monthReportInput := &model.RequestInput{
-		Date:       monthDate,
-		ReportType: monthlyReport,
+	// BankCard report request
+	tp, _ = model.ReportStringToType(bankCardReport)
+	s.bankCardReportReq = &model.ReportRequest{
+		Dates:      dayDates,
+		ReportType: tp,
 	}
-	s.monthReportReq, _ = validate.SetRequest(monthReportInput)
+	// EmployeeOS report request
+	tp, _ = model.ReportStringToType(employeeOSReport)
+	s.employeeOSReportReq = &model.ReportRequest{
+		Dates:      dayDates,
+		ReportType: tp,
+	}
 
-	payPeriodReportInput := &model.RequestInput{
-		DateFrom:   periodDateFrom,
-		DateTo:     periodDateTo,
-		ReportType: payPeriodReport,
+	// FuelSales report request
+	tp, _ = model.ReportStringToType(fuelSalesReport)
+	s.fuelSalesReportReq = &model.ReportRequest{
+		Dates:      monthDates,
+		ReportType: tp,
 	}
-	s.payPeriodReportReq, _ = validate.SetRequest(payPeriodReportInput)
 
-	productNumbersReportInput := &model.RequestInput{
-		DateFrom:   periodDateFrom,
-		DateTo:     periodDateTo,
-		ReportType: productNumbersReport,
+	// Monthly report request
+	tp, _ = model.ReportStringToType(monthlyReport)
+	s.monthReportReq = &model.ReportRequest{
+		Dates:      monthDates,
+		ReportType: tp,
 	}
-	s.productNumbersReportReq, _ = validate.SetRequest(productNumbersReportInput)
+
+	// PayPeriod report request
+	tp, _ = model.ReportStringToType(payPeriodReport)
+	s.payPeriodReportReq = &model.ReportRequest{
+		Dates:      dayDates,
+		ReportType: tp,
+	}
+
+	// ProducctNumbers report request
+	tp, _ = model.ReportStringToType(productNumbersReport)
+	s.productNumbersReportReq = &model.ReportRequest{
+		Dates:      dayDates,
+		ReportType: tp,
+	}
 }
 
-// TestsetFileName method
-func (s *IntegSuite) TestsetFileName() {
+// TestSetFileName method
+func (s *IntegSuite) TestSetFileName() {
 	var err error
-	s.report, err = New(s.monthReportReq, cfg)
+	s.report, err = New(s.monthReportReq, cfg, db)
 	s.NoError(err)
 	s.report.setFileName()
 	fileNm := s.report.getFileName()
 
 	expectedFileNm := fmt.Sprintf("MonthlySalesReport_%s.xlsx", monthDate)
-	s.Equal(fileNm, expectedFileNm)
+	s.Equal(expectedFileNm, fileNm)
 
 	// now test report with date range
-	s.report, err = New(s.payPeriodReportReq, cfg)
+	s.report, err = New(s.payPeriodReportReq, cfg, db)
 	s.NoError(err)
 	s.report.setFileName()
 	fileNm = s.report.getFileName()
 
 	expectedFileNm = fmt.Sprintf("PayPeriodReport_%s_thru_%s.xlsx", periodDateFrom, periodDateTo)
-	s.Equal(fileNm, expectedFileNm)
+	s.Equal(expectedFileNm, fileNm)
 }
 
 // TestFuelSalesGetRecords method
 func (s *IntegSuite) TestFuelSalesGetRecords() {
 	var err error
 
-	s.report, err = New(s.fuelSalesReportReq, cfg)
+	s.report, err = New(s.fuelSalesReportReq, cfg, db)
 	s.NoError(err)
 	rep := &FuelSales{
 		dates: s.report.dates,
@@ -132,7 +158,7 @@ func (s *IntegSuite) TestFuelSalesGetRecords() {
 func (s *IntegSuite) TestShiftTypeGetRecords() {
 	var err error
 
-	s.report, err = New(s.bankCardReportReq, cfg)
+	s.report, err = New(s.bankCardReportReq, cfg, db)
 	s.NoError(err)
 	bc := &BankCard{
 		dates: s.report.dates,
@@ -142,7 +168,7 @@ func (s *IntegSuite) TestShiftTypeGetRecords() {
 	s.NoError(err)
 	s.True(len(bcRecs) > 10)
 
-	s.report, err = New(s.employeeOSReportReq, cfg)
+	s.report, err = New(s.employeeOSReportReq, cfg, db)
 	s.NoError(err)
 	eo := &EmployeeOS{
 		dates: s.report.dates,
@@ -152,7 +178,7 @@ func (s *IntegSuite) TestShiftTypeGetRecords() {
 	s.NoError(err)
 	s.True(len(esRecs) > 10)
 
-	s.report, err = New(s.payPeriodReportReq, cfg)
+	s.report, err = New(s.payPeriodReportReq, cfg, db)
 	s.NoError(err)
 	pp := &PayPeriod{
 		dates: s.report.dates,
@@ -162,7 +188,7 @@ func (s *IntegSuite) TestShiftTypeGetRecords() {
 	s.NoError(err)
 	s.True(len(ppRecs) > 10)
 
-	s.report, err = New(s.productNumbersReportReq, cfg)
+	s.report, err = New(s.productNumbersReportReq, cfg, db)
 	s.NoError(err)
 	pn := &ProductNumbers{
 		dates: s.report.dates,
@@ -177,7 +203,7 @@ func (s *IntegSuite) TestShiftTypeGetRecords() {
 func (s *IntegSuite) TestMonthlyGetRecords() {
 	var err error
 
-	s.report, err = New(s.monthReportReq, cfg)
+	s.report, err = New(s.monthReportReq, cfg, db)
 	s.NoError(err)
 
 	conf, _ := s.report.db.GetConfig()
@@ -192,31 +218,31 @@ func (s *IntegSuite) TestMonthlyGetRecords() {
 	s.True(len(msRecs) > 10)
 }
 
-// Testcreate method
-func (s *IntegSuite) Testcreate() {
+// TestCreate method
+func (s *IntegSuite) TestCreate() {
 	var err error
 
-	s.report, err = New(s.bankCardReportReq, cfg)
+	s.report, err = New(s.bankCardReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 
-	s.report, err = New(s.employeeOSReportReq, cfg)
+	s.report, err = New(s.employeeOSReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 
-	s.report, err = New(s.fuelSalesReportReq, cfg)
+	s.report, err = New(s.fuelSalesReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 
-	s.report, err = New(s.monthReportReq, cfg)
+	s.report, err = New(s.monthReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 
-	s.report, err = New(s.payPeriodReportReq, cfg)
+	s.report, err = New(s.payPeriodReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 
-	s.report, err = New(s.productNumbersReportReq, cfg)
+	s.report, err = New(s.productNumbersReportReq, cfg, db)
 	err = s.report.create()
 	s.NoError(err)
 }
@@ -225,7 +251,7 @@ func (s *IntegSuite) Testcreate() {
 func (s *IntegSuite) TestSaveFuelSalesToDisk() {
 	var err error
 
-	s.report, err = New(s.fuelSalesReportReq, cfg)
+	s.report, err = New(s.fuelSalesReportReq, cfg, db)
 	s.NoError(err)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
@@ -235,7 +261,7 @@ func (s *IntegSuite) TestSaveFuelSalesToDisk() {
 func (s *IntegSuite) TestSaveProductNumbersToDisk() {
 	var err error
 
-	s.report, err = New(s.productNumbersReportReq, cfg)
+	s.report, err = New(s.productNumbersReportReq, cfg, db)
 	s.NoError(err)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
@@ -245,7 +271,7 @@ func (s *IntegSuite) TestSaveProductNumbersToDisk() {
 func (s *IntegSuite) TestSaveEmployeeOSToDisk() {
 	var err error
 
-	s.report, err = New(s.employeeOSReportReq, cfg)
+	s.report, err = New(s.employeeOSReportReq, cfg, db)
 	s.NoError(err)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
@@ -255,7 +281,7 @@ func (s *IntegSuite) TestSaveEmployeeOSToDisk() {
 func (s *IntegSuite) TestSaveBankCardToDisk() {
 	var err error
 
-	s.report, err = New(s.bankCardReportReq, cfg)
+	s.report, err = New(s.bankCardReportReq, cfg, db)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
 }
@@ -264,7 +290,7 @@ func (s *IntegSuite) TestSaveBankCardToDisk() {
 func (s *IntegSuite) TestSavePayPeriodToDisk() {
 	var err error
 
-	s.report, err = New(s.payPeriodReportReq, cfg)
+	s.report, err = New(s.payPeriodReportReq, cfg, db)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
 }
@@ -273,7 +299,7 @@ func (s *IntegSuite) TestSavePayPeriodToDisk() {
 func (s *IntegSuite) TestSaveMonthlyToDisk() {
 	var err error
 
-	s.report, err = New(s.monthReportReq, cfg)
+	s.report, err = New(s.monthReportReq, cfg, db)
 	_, err = s.report.SaveToDisk("../tmp")
 	s.NoError(err)
 }
@@ -281,17 +307,17 @@ func (s *IntegSuite) TestSaveMonthlyToDisk() {
 // TestCreateSignedURL method
 func (s *IntegSuite) TestCreateSignedURL() {
 	var err error
-	s.report, err = New(s.bankCardReportReq, cfg)
+	s.report, err = New(s.bankCardReportReq, cfg, db)
 	url, err := s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)
 
-	s.report, err = New(s.monthReportReq, cfg)
+	s.report, err = New(s.monthReportReq, cfg, db)
 	url, err = s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)
 
-	s.report, err = New(s.payPeriodReportReq, cfg)
+	s.report, err = New(s.payPeriodReportReq, cfg, db)
 	url, err = s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)

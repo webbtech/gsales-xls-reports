@@ -4,7 +4,7 @@ import "github.com/webbtech/gsales-xls-reports/model"
 
 // ProductNumbers struct
 type ProductNumbers struct {
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []*model.ProductNumberRecord
 }
