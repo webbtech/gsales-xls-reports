@@ -53,15 +53,11 @@ func (r *Report) CreateSignedURL() (url string, err error) {
 		return url, err
 	}
 
-	// s3Service, err := awsservices.NewS3(r.cfg)
 	fileObject := r.getFileName()
-	fmt.Printf("filePrefix: %+v\n", r.getFileName())
 	if err = services.UploadS3Object(&fileOutput, fileObject, r.cfg.AwsRegion, r.cfg.S3Bucket); err != nil {
 		return "", err
 	}
 
-	// return s3Service.GetSignedURL(filePrefix, &fileOutput)
-	// return "", nil
 	return services.CreateSignedURL(r.cfg, fileObject)
 }
 
