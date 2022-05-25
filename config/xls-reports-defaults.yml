@@ -4,6 +4,7 @@ DbHost: 192.168.86.137
 DbName: "gales-sales"
 DbPassword: ""
 DbUser: ""
+ExpireHrs: 168 # 7 x 24
 S3Bucket: "gsales-reports"
 S3FilePrefix: "reports"
 SsmPath: "gsales-xls-reports"

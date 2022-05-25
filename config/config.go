@@ -10,6 +10,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -249,4 +250,5 @@ func (c *Config) setFinal() {
 	c.CognitoClientID = defs.CognitoClientID
 	c.DbName = defs.DbName
 	c.S3Bucket = defs.S3Bucket
+	c.UrlExpireTime = time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)
 }

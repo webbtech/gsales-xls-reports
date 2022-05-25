@@ -307,17 +307,18 @@ func (s *IntegSuite) TestSaveMonthlyToDisk() {
 // TestCreateSignedURL method
 func (s *IntegSuite) TestCreateSignedURL() {
 	var err error
-	s.report, err = New(s.bankCardReportReq, cfg, db)
+
+	s.report, _ = New(s.bankCardReportReq, cfg, db)
 	url, err := s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)
 
-	s.report, err = New(s.monthReportReq, cfg, db)
+	s.report, _ = New(s.monthReportReq, cfg, db)
 	url, err = s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)
 
-	s.report, err = New(s.payPeriodReportReq, cfg, db)
+	s.report, _ = New(s.payPeriodReportReq, cfg, db)
 	url, err = s.report.CreateSignedURL()
 	s.NoError(err)
 	s.True(len(url) > 100)

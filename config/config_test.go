@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 )
 
 var cfg *Config
@@ -171,6 +172,19 @@ func TestPublicGetters(t *testing.T) {
 		expectedUrl := fmt.Sprintf("mongodb://%s:%s@%s/?authSource=admin", defs.DbUser, defs.DbPassword, defs.DbHost)
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
+		}
+	})
+}
+
+// This test does NOT run successfully when running the `run file tests` command, otherwise fine...
+func TestUrlExpireTime(t *testing.T) {
+	t.Run("sets expireTime", func(t *testing.T) {
+		cfg = &Config{IsDefaultsLocal: true}
+		cfg.Init()
+
+		expectedHrs := time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)
+		if expectedHrs != cfg.UrlExpireTime {
+			t.Fatalf("UrlExpireTime should be: %v, have: %v", expectedHrs, cfg.UrlExpireTime)
 		}
 	})
 }
