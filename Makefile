@@ -33,7 +33,7 @@ dev-cloud:
 		ParamCustomDomainName=$(CUSTOM_DOMAIN_NAME) \
 		ParamHostedZoneId=$(HOSTED_ZONE_ID) \
 		ParamKMSKeyId=$(KMS_KEY_ID) \
-		ParamReportBucket=${S3_REPORT_BUCKET} \
+		ParamReportBucket=$(S3_REPORT_BUCKET) \
 		ParamSSMPath=$(SSM_PARAM_PATH)
 
 dev-cloud-watch:
@@ -44,7 +44,7 @@ dev-cloud-watch:
 		ParamCertificateArn=$(CERTIFICATE_ARN) \
 		ParamCustomDomainName=$(CUSTOM_DOMAIN_NAME) \
 		ParamHostedZoneId=$(HOSTED_ZONE_ID) \
-		ParamReportBucket=${S3_REPORT_BUCKET}
+		ParamReportBucket=$(S3_REPORT_BUCKET)
 
 tail-logs:
 	sam logs -n ReportsFunction --profile $(PROFILE) \

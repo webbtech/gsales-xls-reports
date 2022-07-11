@@ -60,6 +60,7 @@ func (c *Config) Init() (err error) {
 	if err = c.setEnvVars(); err != nil {
 		return err
 	}
+
 	if err = c.setSSMParams(); err != nil {
 		return err
 	}
@@ -68,9 +69,11 @@ func (c *Config) Init() (err error) {
 		return err
 	}
 
-	c.setDBConnectURL()
+	// c.setDBConnectURL()
+	c.setAWSConnectURL()
 	c.setFinal()
 
+	// fmt.Printf("c.DbConnectURL: %+v\n", c.DbConnectURL)
 	return err
 }
 
@@ -115,8 +118,10 @@ func (c *Config) setDefaults() (err error) {
 		}
 
 	} else { // using remote file path
-		res, err := http.Get(defaultsRemotePath)
+
+		res, err := http.Get("https://gsales-lambdas.s3.ca-central-1.amazonaws.com/public/xls-reports-defaults.yml")
 		if err != nil {
+			fmt.Printf("err: %+v\n", err)
 			return err
 		}
 		defer res.Body.Close()
@@ -229,19 +234,24 @@ func (c *Config) setSSMParams() (err error) {
 // Build a url used in mgo.Dial as described in: https://godoc.org/gopkg.in/mgo.v2#Dial
 func (c *Config) setDBConnectURL() *Config {
 
-	var userPass, authSource string
+	// var userPass, queryParams string
+	var userPass, queryParams string
 
 	if defs.DbUser != "" && defs.DbPassword != "" {
-		userPass = fmt.Sprintf("%s:%s@", defs.DbUser, defs.DbPassword)
+		userPass = fmt.Sprintf("%s:%s", defs.DbUser, defs.DbPassword)
+		queryParams = "?retryWrites=true&w=majority"
+		c.DbConnectURL = fmt.Sprintf("mongodb+srv://%s@%s/%s", userPass, defs.DbHost, queryParams)
+		// mongodb+srv://admin:<password>@peer0.mvx5f.mongodb.net/?retryWrites=true&w=majority
+	} else {
+		queryParams = "?readPreference=primary&ssl=false&directConnection=true"
+		c.DbConnectURL = fmt.Sprintf("mongodb://%s/%s", defs.DbHost, queryParams)
 	}
-
-	if userPass != "" {
-		authSource = "?authSource=admin"
-	}
-
-	c.DbConnectURL = fmt.Sprintf("mongodb://%s%s/%s", userPass, defs.DbHost, authSource)
 
 	return c
+}
+
+func (c *Config) setAWSConnectURL() {
+	c.DbConnectURL = fmt.Sprintf("mongodb+srv://%s/%s?authSource=%sexternal&authMechanism=MONGODB-AWS&retryWrites=true&w=majority", defs.DbHost, defs.DbName, "$")
 }
 
 // Copies required fields from the defaults to the config struct

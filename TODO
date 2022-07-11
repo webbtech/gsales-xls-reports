@@ -1,0 +1,4 @@
+
+Todo:
+  ☐ Remove DB Access credentials
+  ☐ Change Handler switch to HTTPMethod for true REST functionality

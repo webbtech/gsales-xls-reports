@@ -124,6 +124,15 @@ func TestInitConfig(t *testing.T) {
 	}
 }
 
+func TestInitConfigProd(t *testing.T) {
+	os.Setenv("Stage", "prod")
+	cfg = &Config{}
+	err := cfg.Init()
+	if err != nil {
+		t.Fatalf("Expected null error received: %s", err)
+	}
+}
+
 func TestPublicGetters(t *testing.T) {
 	t.Run("GetStageEnv", func(t *testing.T) {
 		stg := TestEnv
@@ -157,19 +166,19 @@ func TestPublicGetters(t *testing.T) {
 		cfg.Init()
 
 		receivedUrl := cfg.GetMongoConnectURL()
-		expectedUrl := fmt.Sprintf("mongodb://%s/", defs.DbHost)
+		expectedUrl := fmt.Sprintf("mongodb://%s/?readPreference=primary&ssl=false&directConnection=true", defs.DbHost)
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
 		}
 	})
 
-	t.Run("GetMongoConnectURL local", func(t *testing.T) {
+	t.Run("GetMongoConnectURL production", func(t *testing.T) {
 		os.Setenv("Stage", "prod")
 		cfg = &Config{IsDefaultsLocal: true}
 		cfg.Init()
 
 		receivedUrl := cfg.GetMongoConnectURL()
-		expectedUrl := fmt.Sprintf("mongodb://%s:%s@%s/?authSource=admin", defs.DbUser, defs.DbPassword, defs.DbHost)
+		expectedUrl := fmt.Sprintf("mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority", defs.DbUser, defs.DbPassword, defs.DbHost)
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
 		}

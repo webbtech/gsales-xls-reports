@@ -39,14 +39,6 @@ Parameters:
   CognitoUserPoolClientName:
     Type: String
     Default: MyTestPoolClient
-  # ParamSecurityGroupIds:
-  #   Description: SecurityGroupIds
-  #   ConstraintDescription: 'must be list of EC2 security group ids'
-  #   Type: 'List<AWS::EC2::SecurityGroup::Id>'
-  # ParamSubnetIds:
-  #   Description: SecurityGroupIds
-  #   ConstraintDescription: 'must be list of EC2 subnet ids'
-  #   Type: 'List<AWS::EC2::Subnet::Id>'
 
 Resources:
   RestApi:
@@ -57,39 +49,32 @@ Resources:
       StageName: Prod
       EndpointConfiguration: 
         Type: REGIONAL
-      Cors:
+      Cors: # NOTE: these could be tightened up some
         AllowMethods: "'*'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
+        
+      # Auth docs: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#api-auth-object
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
           MyCognitoAuthorizer:
-            UserPoolArn: arn:aws:cognito-idp:ca-central-1:407205661819:userpool/ca-central-1_lolwfYIAr
-            # UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+            UserPoolArn: arn:aws:cognito-idp:ca-central-1:407205661819:userpool/ca-central-1_lolwfYIAr # TODO: put into params
             # Identity:
-              # Header: Authorization
-
-        # DefaultAuthorizer: LambdaTokenAuthorizer
-        # Authorizers:
-        #   LambdaTokenAuthorizer:
-        #     FunctionArn: !GetAtt AuthLambda.Arn
-        #     Identity:
-        #       ReauthorizeEvery: 300
-              # ReauthorizeEvery: 1 # for testing purposes
+              # ReauthorizeEvery: 20 # For testing purposes, default is 300
 
       # Documentation for below: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
-      # Oddly, this property does not work with sam local
-      # GatewayResponses:
-      #   UNAUTHORIZED:
-      #     StatusCode: "401"
-      #     ResponseTemplates:
-      #       "application/json": '{ "message": $context.error.messageString }'
-      #     ResponseParameters:
-      #       Headers:
-      #         Access-Control-Expose-Headers: "'WWW-Authenticate'"
-      #         Access-Control-Allow-Origin: "'*'"
-      #         Access-Control-Allow-Headers: "'*'"
+      # his property does not work with sam local
+      GatewayResponses:
+        UNAUTHORIZED:
+          StatusCode: "401"
+          ResponseTemplates: 
+            "application/json": '{ "message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              Access-Control-Expose-Headers: "'WWW-Authenticate'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
 
       # Docs for this at: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
       # Domain:
@@ -118,15 +103,12 @@ Resources:
         Variables:
           Stage: prod
       VpcConfig:
-        # SecurityGroupIds: !Ref ParamSecurityGroupIds
-        # SubnetIds: !Ref ParamSubnetIds
-        SecurityGroupIds:
-          - sg-0ef2b0c1027e7c4af
-          - sg-0dfa356e283807b5c
         SubnetIds:
-          - subnet-049d3b3c41f948eab
-          - subnet-05e3c14490b96f34c
-          - subnet-0dbfe2dec1f2c716a
+          - subnet-015e4e939f9bb2f89
+          - subnet-0e146cd98e8e15e25
+          - subnet-0edd64d562d0a0a03
+        SecurityGroupIds:
+          - sg-00223abd5286c9b96
       Tags:
         BillTo: !Ref ParamBillTo
       Events:
@@ -136,16 +118,16 @@ Resources:
             Path: /
             Method: GET
             RestApiId: !Ref RestApi
-            # Auth:
-              # Authorizer: NONE
+            Auth:
+              Authorizer: NONE
         Report:
           Type: Api
           Properties:
             Path: /report
             Method: POST
             RestApiId: !Ref RestApi
-            Auth:
-              Authorizer: MyCognitoAuthorizer
+            # Auth:
+              # Authorizer: MyCognitoAuthorizer
               # Authorizer: NONE
         # Options:
         #   Type: Api
@@ -226,34 +208,6 @@ Resources:
             - ec2:DeleteNetworkInterface
             - ec2:DescribeNetworkInterfaces
             Resource: '*'
-
-  # MyCognitoUserPool:
-  #   Type: AWS::Cognito::UserPool
-  #   Properties:
-  #     UserPoolName: !Ref CognitoUserPoolName
-  #     Policies:
-  #       PasswordPolicy:
-  #         MinimumLength: 8
-  #     UsernameAttributes:
-  #       - email
-  #     Schema:
-  #       - AttributeDataType: String
-  #         Name: email
-  #         Required: false
-  
-  # MyCognitoUserPoolClient:
-  #   Type: AWS::Cognito::UserPoolClient
-  #   Properties:
-  #     UserPoolId: !Ref MyCognitoUserPool
-  #     ClientName: !Ref CognitoUserPoolClientName
-  #     GenerateSecret: false
-  #     # in order to add the ALLOW_USER_PASSWORD_AUTH auth flow, we need to add the ALLOW_REFRESH_TOKEN_AUTH flow,
-  #     # the ALLOW_USER_SRP_AUTH and ALLOW_CUSTOM_AUTH are there by default so I included them
-  #     ExplicitAuthFlows:
-  #       - ALLOW_REFRESH_TOKEN_AUTH # this is required and must be here
-  #       - ALLOW_USER_PASSWORD_AUTH
-  #       - ALLOW_USER_SRP_AUTH
-  #       - ALLOW_CUSTOM_AUTH
   
 Outputs:
   ApiId:
