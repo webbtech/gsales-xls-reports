@@ -69,8 +69,7 @@ func (c *Config) Init() (err error) {
 		return err
 	}
 
-	// c.setDBConnectURL()
-	c.setAWSConnectURL()
+	c.setDBConnectURL()
 	c.setFinal()
 
 	// fmt.Printf("c.DbConnectURL: %+v\n", c.DbConnectURL)
@@ -231,21 +230,14 @@ func (c *Config) setSSMParams() (err error) {
 	return err
 }
 
-// Build a url used in mgo.Dial as described in: https://godoc.org/gopkg.in/mgo.v2#Dial
 func (c *Config) setDBConnectURL() *Config {
 
-	// var userPass, queryParams string
-	var userPass, queryParams string
-
-	if defs.DbUser != "" && defs.DbPassword != "" {
-		userPass = fmt.Sprintf("%s:%s", defs.DbUser, defs.DbPassword)
-		queryParams = "?retryWrites=true&w=majority"
-		c.DbConnectURL = fmt.Sprintf("mongodb+srv://%s@%s/%s", userPass, defs.DbHost, queryParams)
-		// mongodb+srv://admin:<password>@peer0.mvx5f.mongodb.net/?retryWrites=true&w=majority
-	} else {
-		queryParams = "?readPreference=primary&ssl=false&directConnection=true"
-		c.DbConnectURL = fmt.Sprintf("mongodb://%s/%s", defs.DbHost, queryParams)
+	if c.GetStageEnv() != TestEnv {
+		c.setAWSConnectURL()
+		return c
 	}
+
+	c.DbConnectURL = fmt.Sprintf("mongodb://%s/?readPreference=primary&ssl=false&directConnection=true", defs.DbHost)
 
 	return c
 }
@@ -257,7 +249,6 @@ func (c *Config) setAWSConnectURL() {
 // Copies required fields from the defaults to the config struct
 func (c *Config) setFinal() {
 	c.AwsRegion = defs.AwsRegion
-	c.CognitoClientID = defs.CognitoClientID
 	c.DbName = defs.DbName
 	c.S3Bucket = defs.S3Bucket
 	c.UrlExpireTime = time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)

@@ -15,7 +15,6 @@ import (
 var (
 	cfg *config.Config
 	db  model.DbHandler
-	// client *mongo.Client
 	err error
 )
 
@@ -47,11 +46,15 @@ func init() {
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var h handlers.Handler
 
-	switch request.Path {
-	case "/report":
+	switch request.HTTPMethod {
+	case "POST":
 		h = &handlers.Report{Cfg: cfg, Db: db}
-	default:
+	case "GET":
 		h = &handlers.Ping{}
+	case "OPTIONS":
+		h = &handlers.Options{}
+	default:
+		h = &handlers.Any{}
 	}
 
 	return h.Response(request)

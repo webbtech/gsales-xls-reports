@@ -90,10 +90,6 @@ func TestSetSSMParams(t *testing.T) {
 		if defs.DbName == "" {
 			t.Fatalf("Expected defs.DbName to have value")
 		}
-		if defs.CognitoClientID == "" {
-			t.Fatalf("Expected defs.CognitoClientID to have value")
-		}
-
 	})
 }
 
@@ -178,7 +174,8 @@ func TestPublicGetters(t *testing.T) {
 		cfg.Init()
 
 		receivedUrl := cfg.GetMongoConnectURL()
-		expectedUrl := fmt.Sprintf("mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority", defs.DbUser, defs.DbPassword, defs.DbHost)
+		// expectedUrl := fmt.Sprintf("mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority", defs.DbUser, defs.DbPassword, defs.DbHost)
+		expectedUrl := fmt.Sprintf("mongodb+srv://%s/%s?authSource=%sexternal&authMechanism=MONGODB-AWS&retryWrites=true&w=majority", defs.DbHost, defs.DbName, "$")
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
 		}

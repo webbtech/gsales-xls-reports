@@ -2,12 +2,15 @@ include .env
 
 # found yolo at: https://azer.bike/journal/a-good-makefile-for-go/
 
-default: build \
+default: check_env build \
 	local-api
 
-deploy: build \
+deploy: check_env build \
 	upload-defaults \
 	dev-cloud
+
+check_env:
+	@echo -n "Your environment is $(ENV)? [y/N] " && read ans && [ $${ans:-N} = y ]
 
 upload-defaults:
 	@ aws s3 cp ./config/xls-reports-defaults.yml s3://$(AWS_LAMBDA_BUCKET)/public/
@@ -28,23 +31,24 @@ dev-cloud:
 	sam sync --stack-name $(STACK_NAME) --profile $(PROFILE) \
 	--s3-prefix $(AWS_DEPLOYMENT_PREFIX) \
 	--parameter-overrides \
-	  ParamBillTo=$(BILLTO) \
 		ParamCertificateArn=$(CERTIFICATE_ARN) \
 		ParamCustomDomainName=$(CUSTOM_DOMAIN_NAME) \
+		ParamENV=$(ENV) \
 		ParamHostedZoneId=$(HOSTED_ZONE_ID) \
-		ParamKMSKeyId=$(KMS_KEY_ID) \
 		ParamReportBucket=$(S3_REPORT_BUCKET) \
-		ParamSSMPath=$(SSM_PARAM_PATH)
+		ParamSSMPath=$(SSM_PARAM_PATH) \
+		ParamUserPoolArn=$(USER_POOL_ARN)
 
 dev-cloud-watch:
 	sam sync --stack-name $(STACK_NAME) --watch --profile $(PROFILE) \
 	--s3-prefix $(AWS_DEPLOYMENT_PREFIX) \
 	--parameter-overrides \
-		ParamBillTo=$(BILLTO) \
 		ParamCertificateArn=$(CERTIFICATE_ARN) \
 		ParamCustomDomainName=$(CUSTOM_DOMAIN_NAME) \
+		ParamENV=$(ENV) \
 		ParamHostedZoneId=$(HOSTED_ZONE_ID) \
-		ParamReportBucket=$(S3_REPORT_BUCKET)
+		ParamReportBucket=$(S3_REPORT_BUCKET) \
+		ParamUserPoolArn=$(USER_POOL_ARN)
 
 tail-logs:
 	sam logs -n ReportsFunction --profile $(PROFILE) \
