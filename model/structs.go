@@ -5,7 +5,7 @@ import "time"
 // ReportRequest struct
 type ReportRequest struct {
 	Dates      *RequestDates
-	ReportType *ReportType
+	ReportType ReportType
 }
 
 // RequestInput struct

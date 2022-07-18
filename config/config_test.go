@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 )
 
 var cfg *Config
@@ -44,6 +45,7 @@ func TestValidateStage(t *testing.T) {
 
 	t.Run("stage set from environment", func(t *testing.T) {
 		os.Setenv("Stage", "test")
+		defer os.Unsetenv("Stage")
 		cfg.setEnvVars() // calls validateStage
 		if cfg.Stage != TestEnv {
 			t.Fatalf("Stage value should be: %s, have: %s", TestEnv, cfg.Stage)
@@ -52,6 +54,7 @@ func TestValidateStage(t *testing.T) {
 
 	t.Run("stage set from invalid environment variable", func(t *testing.T) {
 		os.Setenv("Stage", "testit")
+		defer os.Unsetenv("Stage")
 		err := cfg.setEnvVars()
 		if err == nil {
 			t.Fatalf("Expected validateStage to return error")
@@ -87,10 +90,6 @@ func TestSetSSMParams(t *testing.T) {
 		if defs.DbName == "" {
 			t.Fatalf("Expected defs.DbName to have value")
 		}
-		if defs.CognitoClientID == "" {
-			t.Fatalf("Expected defs.CognitoClientID to have value")
-		}
-
 	})
 }
 
@@ -115,6 +114,15 @@ func TestSetEnvVars(t *testing.T) {
 
 func TestInitConfig(t *testing.T) {
 	cfg = &Config{IsDefaultsLocal: true}
+	err := cfg.Init()
+	if err != nil {
+		t.Fatalf("Expected null error received: %s", err)
+	}
+}
+
+func TestInitConfigProd(t *testing.T) {
+	os.Setenv("Stage", "prod")
+	cfg = &Config{}
 	err := cfg.Init()
 	if err != nil {
 		t.Fatalf("Expected null error received: %s", err)
@@ -154,21 +162,35 @@ func TestPublicGetters(t *testing.T) {
 		cfg.Init()
 
 		receivedUrl := cfg.GetMongoConnectURL()
-		expectedUrl := fmt.Sprintf("mongodb://%s/", defs.DbHost)
+		expectedUrl := fmt.Sprintf("mongodb://%s/?readPreference=primary&ssl=false&directConnection=true", defs.DbHost)
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
 		}
 	})
 
-	t.Run("GetMongoConnectURL local", func(t *testing.T) {
+	t.Run("GetMongoConnectURL production", func(t *testing.T) {
 		os.Setenv("Stage", "prod")
 		cfg = &Config{IsDefaultsLocal: true}
 		cfg.Init()
 
 		receivedUrl := cfg.GetMongoConnectURL()
-		expectedUrl := fmt.Sprintf("mongodb://%s:%s@%s/?authSource=admin", defs.DbUser, defs.DbPassword, defs.DbHost)
+		// expectedUrl := fmt.Sprintf("mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority", defs.DbUser, defs.DbPassword, defs.DbHost)
+		expectedUrl := fmt.Sprintf("mongodb+srv://%s/%s?authSource=%sexternal&authMechanism=MONGODB-AWS&retryWrites=true&w=majority", defs.DbHost, defs.DbName, "$")
 		if receivedUrl != expectedUrl {
 			t.Fatalf("Expected url: %s, got: %s", expectedUrl, receivedUrl)
+		}
+	})
+}
+
+// This test does NOT run successfully when running the `run file tests` command, otherwise fine...
+func TestUrlExpireTime(t *testing.T) {
+	t.Run("sets expireTime", func(t *testing.T) {
+		cfg = &Config{IsDefaultsLocal: true}
+		cfg.Init()
+
+		expectedHrs := time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)
+		if expectedHrs != cfg.UrlExpireTime {
+			t.Fatalf("UrlExpireTime should be: %v, have: %v", expectedHrs, cfg.UrlExpireTime)
 		}
 	})
 }

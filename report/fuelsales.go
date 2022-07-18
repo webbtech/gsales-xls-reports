@@ -6,7 +6,7 @@ import (
 
 // FuelSales struct
 type FuelSales struct {
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []model.FuelSalesRecord
 }

@@ -6,7 +6,7 @@ import (
 
 // BankCard struct
 type BankCard struct {
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []*model.BankCardRecord
 }

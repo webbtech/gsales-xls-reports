@@ -1,67 +1,72 @@
 AWSTemplateFormatVersion : '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
-Description: Gales Sales XLS Reports Service
+Description: >
+  xls-reports
+
+  Gales Sales XLS Reports Service
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
 
 Parameters:
-  IAMUsername:
-    Description: Username of the IAM user for this service
+  ParamBillTo:
+    Description: Required. Value of Tag key BillTo
     Type: String
-    Default: sysadmin
+    Default: "Gales"
   ParamCertificateArn:
     Description: Domain Certificate Arn
     Type: String
   ParamCustomDomainName:
     Description: Custom Domain Name
     Type: String
+  ParamENV:
+    Description: Stage environment
+    Type: String
   ParamHostedZoneId:
     Description: Hosted Zone ID
-    Type: String
-  ParamKMSKeyID:
-    Description: KMS key id
-    Type: String
-  ParamThundraKey:
-    Description: thundra.io API key
     Type: String
   ParamReportBucket:
     Description: Bucket for report files
     Type: String
-  ParamProjectName:
-    Description: Project name
+  ParamSSMPath:
+    Description: SSM Params path
     Type: String
-  ParamSecurityGroupIds:
-    Description: SecurityGroupIds
-    ConstraintDescription: 'must be list of EC2 security group ids'
-    Type: 'List<AWS::EC2::SecurityGroup::Id>'
-  ParamSubnetIds:
-    Description: SecurityGroupIds
-    ConstraintDescription: 'must be list of EC2 subnet ids'
-    Type: 'List<AWS::EC2::Subnet::Id>'
+  ParamUserPoolArn:
+    Description: Cognito User Pool Arn
+    Type: String
 
 Resources:
   RestApi:
     Type: AWS::Serverless::Api
     DeletionPolicy: Delete
-    DependsOn: Lambda
+    DependsOn: ReportsFunction
     Properties:
       StageName: Prod
       EndpointConfiguration: 
         Type: REGIONAL
+      Cors: # NOTE: these could be tightened up some
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'" # TODO: add an origin here
+        
+      # Auth docs: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#api-auth-object
       Auth:
-        DefaultAuthorizer: LambdaTokenAuthorizer
+        DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
-          LambdaTokenAuthorizer:
-            FunctionArn: !GetAtt AuthLambda.Arn
-            Identity:
-              ReauthorizeEvery: 300
-              # ReauthorizeEvery: 1 # for testing purposes
+          MyCognitoAuthorizer:
+            UserPoolArn: !Ref ParamUserPoolArn
+            # Identity:
+              # ReauthorizeEvery: 20 # For testing purposes, default is 300
 
       # Documentation for below: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#gateway-response-object
-      # Oddly, this property does not work with sam local
+      # his property does not work with sam local
       GatewayResponses:
         UNAUTHORIZED:
-          StatusCode: 401
-          ResponseTemplates:
+          StatusCode: "401"
+          ResponseTemplates: 
             "application/json": '{ "message": $context.error.messageString }'
           ResponseParameters:
             Headers:
@@ -80,23 +85,31 @@ Resources:
           DistributionDomainName:
             Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
 
-  Lambda:
+  ReportsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: go1.x
       CodeUri: ./
       Handler: report
-      Role: !GetAtt LambdaRole.Arn
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+        # - arm64 # although a better architecture, it's not supported in ca-central-1 (yet?) see https://filia-aleks.medium.com/aws-lambda-battle-x86-vs-arm-graviton2-perfromance-3581aaef75d9
+      Tracing: Active
+      Role: !GetAtt ReportsRole.Arn
       Timeout: 20
       MemorySize: 1028
       Environment:
         Variables:
-          Stage: prod
+          Stage: !Ref ParamENV
       VpcConfig:
-        SecurityGroupIds: !Ref ParamSecurityGroupIds
-        SubnetIds: !Ref ParamSubnetIds
+        SubnetIds:
+          - subnet-015e4e939f9bb2f89
+          - subnet-0e146cd98e8e15e25
+          - subnet-0edd64d562d0a0a03
+        SecurityGroupIds:
+          - sg-00223abd5286c9b96
       Tags:
-        BillTo: 'Gales'
+        BillTo: !Ref ParamBillTo
       Events:
         Ping:
           Type: Api
@@ -109,34 +122,27 @@ Resources:
         Report:
           Type: Api
           Properties:
-            Path: /report
+            Path: /
             Method: POST
             RestApiId: !Ref RestApi
+        Any:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref RestApi
             Auth:
-              # Authorizer: LambdaTokenAuthorizer
               Authorizer: NONE
         Options:
           Type: Api
           Properties:
-            Path: /report
+            Path: /
             Method: OPTIONS
             RestApiId: !Ref RestApi
             Auth:
               Authorizer: NONE
 
-  # AuthLambda:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     CodeUri: ./authorizer
-  #     Handler: authorizer
-  #     Runtime: go1.x
-  #     Role: !GetAtt AuthLambdaRole.Arn
-  #     Timeout: 10
-  #     MemorySize: 256
-  #     Tags:
-  #       BillTo: 'Gales'
-
-  LambdaRole:
+  ReportsRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -157,17 +163,7 @@ Resources:
             Action:
             - ssm:GetParametersByPath
             Resource:
-              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/${ParamProjectName}*
-      - PolicyName: FunctionKMS
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - kms:Decrypt
-            - kms:DescribeKey
-            Resource:
-              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${ParamKMSKeyID}
+              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParamENV}/${ParamSSMPath}
       - PolicyName: FunctionLogAccess
         PolicyDocument:
           Version: '2012-10-17'
@@ -206,50 +202,7 @@ Resources:
             - ec2:DeleteNetworkInterface
             - ec2:DescribeNetworkInterfaces
             Resource: '*'
-
-  AuthLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Policies:
-      - PolicyName: FunctionParameterAccess
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - ssm:GetParametersByPath
-            Resource:
-              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/${ParamProjectName}*
-      - PolicyName: FunctionKMS
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - kms:Decrypt
-            - kms:DescribeKey
-            Resource:
-              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${ParamKMSKeyID}
-      - PolicyName: FunctionLogAccess
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: '*'
-
+  
 Outputs:
   ApiId:
     Description: API ID
@@ -266,16 +219,10 @@ Outputs:
     Value: !Ref ParamCustomDomainName
   ApiURL:
     Description: "API Url"
-    Value: !Sub "https://${ParamCustomDomainName}/report"
-  LambdaArn:
-    Description: "Lambda ARN"
-    Value: !GetAtt Lambda.Arn
-  AuthLambdaArn:
-    Description: "Authorizer Lambda ARN"
-    Value: !GetAtt AuthLambda.Arn
-  LambdaRoleArn:
-    Description: "Lambda Role ARN"
-    Value: !GetAtt LambdaRole.Arn
-  AuthLambdaRoleArn:
-    Description: "Authorizer Lambda Role ARN"
-    Value: !GetAtt AuthLambdaRole.Arn
+    Value: !Sub "https://${ParamCustomDomainName}"
+  ReportsFunctionArn:
+    Description: "ReportsFunction ARN"
+    Value: !GetAtt ReportsFunction.Arn
+  ReportsRoleArn:
+    Description: "Reports Role ARN"
+    Value: !GetAtt ReportsRole.Arn

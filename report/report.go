@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/webbtech/gsales-xls-reports/awsservices"
 	"github.com/webbtech/gsales-xls-reports/config"
 	"github.com/webbtech/gsales-xls-reports/model"
-	"github.com/webbtech/gsales-xls-reports/model/db"
+	"github.com/webbtech/gsales-xls-reports/services"
 	"github.com/webbtech/gsales-xls-reports/xlsx"
 )
 
@@ -16,10 +15,10 @@ import (
 type Report struct {
 	cfg        *config.Config
 	dates      *model.RequestDates
-	db         model.DBHandler
+	db         model.DbHandler
 	file       *xlsx.XLSX
 	filename   string
-	reportType *model.ReportType
+	reportType model.ReportType
 }
 
 // Constants
@@ -29,11 +28,7 @@ const (
 )
 
 // New function
-func New(req *model.ReportRequest, cfg *config.Config) (report *Report, err error) {
-	db, err := db.NewDB(cfg.GetMongoConnectURL(), cfg.DbName)
-	if err != nil {
-		return nil, err
-	}
+func New(req *model.ReportRequest, cfg *config.Config, db model.DbHandler) (report *Report, err error) {
 
 	return &Report{
 		cfg:        cfg,
@@ -58,10 +53,12 @@ func (r *Report) CreateSignedURL() (url string, err error) {
 		return url, err
 	}
 
-	s3Service, err := awsservices.NewS3(r.cfg)
-	filePrefix := r.getFileName()
+	fileObject := r.getFileName()
+	if err = services.UploadS3Object(&fileOutput, fileObject, r.cfg.AwsRegion, r.cfg.S3Bucket); err != nil {
+		return "", err
+	}
 
-	return s3Service.GetSignedURL(filePrefix, &fileOutput)
+	return services.CreateSignedURL(r.cfg, fileObject)
 }
 
 // SaveToDisk method
@@ -88,7 +85,7 @@ func (r *Report) create() (err error) {
 		return err
 	}
 
-	rt := *r.reportType
+	rt := r.reportType
 	switch rt {
 	case model.BankCardsReport:
 		return r.createBankCardsReport()
@@ -118,7 +115,6 @@ func (r *Report) createBankCardsReport() (err error) {
 	}
 
 	records, err := bc.GetRecords()
-	defer r.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.BankCards(records)
@@ -133,7 +129,6 @@ func (r *Report) createEmployeeOSReport() (err error) {
 	}
 
 	records, err := eo.GetRecords()
-	defer r.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.EmployeeOS(records)
@@ -149,7 +144,6 @@ func (r *Report) createFuelSalesReport() (err error) {
 	}
 
 	records, err := rep.GetRecords()
-	defer r.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.FuelSales(records)
@@ -171,7 +165,6 @@ func (r *Report) createMonthlySales() (err error) {
 	}
 
 	records, err := ms.GetRecords()
-	defer r.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.MonthlySales(records)
@@ -186,7 +179,6 @@ func (r *Report) createPayPeriod() (err error) {
 		db:    r.db,
 	}
 	records, err := pp.GetRecords()
-	defer pp.db.Close()
 	if err != nil {
 		return err
 	}
@@ -204,7 +196,6 @@ func (r *Report) createProductNumbers() (err error) {
 		db:    r.db,
 	}
 	records, err := pn.GetRecords()
-	defer pn.db.Close()
 
 	r.file, err = xlsx.NewFile()
 	err = r.file.ProductNumbers(records)
@@ -215,7 +206,7 @@ func (r *Report) createProductNumbers() (err error) {
 // ===================== Helper Methods ======================================================== //
 
 func (r *Report) setFileName() (err error) {
-	rt := *r.reportType
+	rt := r.reportType
 	switch rt {
 	case model.BankCardsReport:
 		r.filename = fmt.Sprintf("BankCardsReport_%s_thru_%s.xlsx", r.dates.DateFrom.Format(timeFormatLong), r.dates.DateTo.Format(timeFormatLong))

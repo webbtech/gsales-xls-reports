@@ -2,8 +2,8 @@ package model
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-// DBHandler interface
-type DBHandler interface {
+// DbHandler interface
+type DbHandler interface {
 	Close()
 	GetBankCards(*RequestDates) ([]*Sales, error)
 	GetCarWash(*RequestDates) ([]*NonFuelSale, error)

@@ -18,8 +18,7 @@ const (
 )
 
 // ReportStringToType function
-func ReportStringToType(rType string) (ReportType, error) {
-	var rt ReportType
+func ReportStringToType(rType string) (rt ReportType, err error) {
 
 	switch rType {
 	case "bankcards":

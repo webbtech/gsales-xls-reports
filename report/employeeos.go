@@ -6,7 +6,7 @@ import (
 
 // EmployeeOS struct
 type EmployeeOS struct {
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []*model.EmployeeOSRecord
 }

@@ -10,6 +10,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -59,6 +60,7 @@ func (c *Config) Init() (err error) {
 	if err = c.setEnvVars(); err != nil {
 		return err
 	}
+
 	if err = c.setSSMParams(); err != nil {
 		return err
 	}
@@ -70,6 +72,7 @@ func (c *Config) Init() (err error) {
 	c.setDBConnectURL()
 	c.setFinal()
 
+	// fmt.Printf("c.DbConnectURL: %+v\n", c.DbConnectURL)
 	return err
 }
 
@@ -114,8 +117,10 @@ func (c *Config) setDefaults() (err error) {
 		}
 
 	} else { // using remote file path
-		res, err := http.Get(defaultsRemotePath)
+
+		res, err := http.Get("https://gsales-lambdas.s3.ca-central-1.amazonaws.com/public/xls-reports-defaults.yml")
 		if err != nil {
+			fmt.Printf("err: %+v\n", err)
 			return err
 		}
 		defer res.Body.Close()
@@ -160,7 +165,7 @@ func (c *Config) validateStage() (err error) {
 	}
 
 	if !validEnv {
-		return errors.New("Invalid StageEnvironment requested")
+		return errors.New(fmt.Sprintf("Invalid StageEnvironment requested: %s", defs.Stage))
 	}
 
 	return err
@@ -225,28 +230,26 @@ func (c *Config) setSSMParams() (err error) {
 	return err
 }
 
-// Build a url used in mgo.Dial as described in: https://godoc.org/gopkg.in/mgo.v2#Dial
 func (c *Config) setDBConnectURL() *Config {
 
-	var userPass, authSource string
-
-	if defs.DbUser != "" && defs.DbPassword != "" {
-		userPass = fmt.Sprintf("%s:%s@", defs.DbUser, defs.DbPassword)
+	if c.GetStageEnv() != TestEnv {
+		c.setAWSConnectURL()
+		return c
 	}
 
-	if userPass != "" {
-		authSource = "?authSource=admin"
-	}
-
-	c.DbConnectURL = fmt.Sprintf("mongodb://%s%s/%s", userPass, defs.DbHost, authSource)
+	c.DbConnectURL = fmt.Sprintf("mongodb://%s/?readPreference=primary&ssl=false&directConnection=true", defs.DbHost)
 
 	return c
+}
+
+func (c *Config) setAWSConnectURL() {
+	c.DbConnectURL = fmt.Sprintf("mongodb+srv://%s/%s?authSource=%sexternal&authMechanism=MONGODB-AWS&retryWrites=true&w=majority", defs.DbHost, defs.DbName, "$")
 }
 
 // Copies required fields from the defaults to the config struct
 func (c *Config) setFinal() {
 	c.AwsRegion = defs.AwsRegion
-	c.CognitoClientID = defs.CognitoClientID
 	c.DbName = defs.DbName
 	c.S3Bucket = defs.S3Bucket
+	c.UrlExpireTime = time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)
 }

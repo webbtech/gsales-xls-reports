@@ -1,8 +1,9 @@
-package db
+package mongodb
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -68,13 +69,17 @@ func NewDB(connection string, dbNm string) (*MDB, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Check the connection
 	err = client.Ping(context.Background(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Infoln("Connected to MongoDB!")
+	stage := os.Getenv("Stage")
+	if stage != "test" {
+		log.Infoln("Connected to MongoDB!")
+	}
 
 	return &MDB{
 		client: client,

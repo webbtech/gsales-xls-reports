@@ -7,7 +7,7 @@ import (
 // MonthlySales struct
 type MonthlySales struct {
 	cfg     *model.Config
-	db      model.DBHandler
+	db      model.DbHandler
 	dates   *model.RequestDates
 	records []*model.MonthlySaleRecord
 }
