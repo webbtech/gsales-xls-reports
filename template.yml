@@ -31,9 +31,6 @@ Parameters:
   ParamReportBucket:
     Description: Bucket for report files
     Type: String
-  ParamKMSKeyId:
-    Description: KMS key id
-    Type: String
   ParamSSMPath:
     Description: SSM Params path
     Type: String
